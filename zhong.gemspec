@@ -1,7 +1,7 @@
 # coding: utf-8
-lib = File.expand_path('../lib', __FILE__)
+lib = File.expand_path("../lib", __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'zhong/version'
+require "zhong/version"
 
 Gem::Specification.new do |spec|
   spec.name          = "zhong"
@@ -9,9 +9,9 @@ Gem::Specification.new do |spec|
   spec.authors       = ["Nick Elser"]
   spec.email         = ["nick.elser@gmail.com"]
 
-  spec.summary       = %q{TODO: Write a short summary, because Rubygems requires one.}
-  spec.description   = %q{TODO: Write a longer description or delete this line.}
-  spec.homepage      = "TODO: Put your gem's website or public repo URL here."
+  spec.summary       = %q{Reliable, distributed cron.}
+  spec.description   = %q{Reliable, distributed cron.}
+  spec.homepage      = "https://www.github.com/nickelser/zhong"
   spec.license       = "MIT"
 
   spec.files         = `git ls-files -z`.split("\x0")
@@ -20,10 +20,12 @@ Gem::Specification.new do |spec|
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ["lib"]
 
-  spec.required_ruby_version = "~> 2.0"
+  spec.required_ruby_version = "~> 2.1"
 
   spec.add_dependency "suo"
   spec.add_dependency "redis"
+  spec.add_dependency "tzinfo"
+  spec.add_dependency "activesupport"
 
   spec.add_development_dependency "bundler", "~> 1.5"
   spec.add_development_dependency "rake", "~> 10.0"
