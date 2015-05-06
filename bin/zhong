@@ -1,0 +1,15 @@
+#!/usr/bin/env ruby
+
+STDERR.sync = STDOUT.sync = true
+
+require "bundler/setup"
+require "zhong"
+
+usage = "zhong <zhong.rb>"
+file = ARGV.shift || abort(usage)
+
+file = "./#{file}" unless file.match(/^[\/.]/)
+
+require file
+
+Zhong.start

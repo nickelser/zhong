@@ -15,14 +15,14 @@ gem 'zhong'
 ```ruby
 r = Redis.new
 
-Zhong.schedule(redis: r) do
-  category "stuff" do
-    every(5.seconds, "foo") { puts "foo" }
-    every(1.week, "baz", at: "mon 22:45") { puts "baz" }
+Zhong.schedule(redis: r) do |s|
+  s.category "stuff" do
+    s.every(5.seconds, "foo") { puts "foo" }
+    s.every(1.week, "baz", at: "mon 22:45") { puts "baz" }
   end
 
-  category "clutter" do
-    every(1.second, "compute", if: -> (t) { rand < 0.5 }) { puts "something happened" }
+  s.category "clutter" do
+    s.every(1.second, "compute", if: -> (t) { rand < 0.5 }) { puts "something happened" }
   end
 end
 ```

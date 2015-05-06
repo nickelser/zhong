@@ -2,27 +2,37 @@ module Zhong
   class Scheduler
     attr_reader :config, :redis, :jobs
 
+    DEFAULT_CONFIG = {
+      timeout: 0.5,
+      grace: 15.minutes,
+      long_running_timeout: 5.minutes
+    }.freeze
+
+    TRAPPED_SIGNALS = %w(QUIT INT TERM).freeze
+
     def initialize(config = {})
       @jobs = {}
-      @config = {timeout: 0.5, grace: 15.minutes, long_running_timeout: 5.minutes}.merge(config)
-      @logger = @config[:logger] ||= self.class.default_logger
-      @redis = @config[:redis] ||= Redis.new
+      @config = DEFAULT_CONFIG.merge(config)
+      @logger = @config[:logger] ||= Util.default_logger
+      @redis = @config[:redis] ||= Redis.new(ENV["REDIS_URL"])
     end
 
     def category(name)
-      @category = name
+      fail "cannot nest categories: #{name} would be nested in #{@category}" if @category
 
-      yield
+      @category = name.to_s
+
+      yield(self)
 
       @category = nil
     end
 
     def every(period, name, opts = {}, &block)
-      add(Job.new(scheduler: self, name: name, every: period, at: opts[:at], only_if: opts[:if], category: @category, &block))
+      add(Job.new(name, opts.merge(@config).merge(every: period, category: @category), &block))
     end
 
     def start
-      %w(QUIT INT TERM).each do |sig|
+      TRAPPED_SIGNALS.each do |sig|
         Signal.trap(sig) { stop }
       end
 
@@ -65,12 +75,6 @@ module Zhong
       s, ms = @redis.time # returns [seconds since epoch, microseconds]
       now = Time.at(s + ms / (10**6))
       config[:tz] ? now.in_time_zone(config[:tz]) : now
-    end
-
-    def self.default_logger
-      Logger.new(STDOUT).tap do |logger|
-        logger.formatter = -> (_, datetime, _, msg) { "#{datetime}: #{msg}\n" }
-      end
     end
   end
 end

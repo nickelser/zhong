@@ -2,23 +2,26 @@ module Zhong
   class Job
     attr_reader :name, :category
 
-    def initialize(scheduler:, name:, every: nil, at: nil, only_if: nil, category: nil, &block)
+    def initialize(name, config = {}, &block)
       @name = name
-      @category = category
+      @category = config[:category]
 
-      @at = At.parse(at, grace: scheduler.config[:grace])
-      @every = Every.parse(every)
+      @at = At.parse(config[:at], grace: config.fetch(:grace, 15.minutes))
+      @every = Every.parse(config[:every])
 
       if @at && !@every
         @logger.error "warning: #{self} has `at` but no `every`; could run far more often than expected!"
       end
 
+      fail "must specific either `at` or `every` for a job" unless @at || @every
+
       @block = block
-      @redis = scheduler.config[:redis]
-      @logger = scheduler.config[:logger]
-      @tz = scheduler.config[:tz]
-      @if = only_if
-      @lock = Suo::Client::Redis.new(lock_key, client: @redis, stale_lock_expiration: scheduler.config[:long_running_timeout])
+
+      @redis = config[:redis]
+      @logger = config[:logger]
+      @tz = config[:tz]
+      @if = config[:if]
+      @lock = Suo::Client::Redis.new(lock_key, client: @redis, stale_lock_expiration: config[:long_running_timeout])
       @timeout = 5
 
       refresh_last_ran
@@ -35,6 +38,8 @@ module Zhong
         @logger.info "already running: #{self}"
         return
       end
+
+      @thread = nil
 
       ran_set = @lock.lock do
         refresh_last_ran
@@ -85,7 +90,13 @@ module Zhong
     end
 
     def to_s
-      [@category, @name].compact.join(".")
+      [@category, @name].compact.join(".").freeze
+    end
+
+    def next_at
+      every_time = @every.next_at(@last_ran) if @last_ran && @every
+      at_time = @at.next_at(time) if @at
+      [every_time, at_time, Time.now].compact.max || "now"
     end
 
     private
