@@ -31,7 +31,7 @@ module Zhong
       run_every?(time) && run_at?(time) && run_if?(time)
     end
 
-    def run(time = Time.now)
+    def run(time = Time.now, error_handler = nil)
       return unless run?(time)
 
       if running?
@@ -58,7 +58,18 @@ module Zhong
 
         @logger.info "running: #{self}"
 
-        @thread = Thread.new { @block.call } if @block
+        if @block
+          @thread = Thread.new do
+            begin
+              @block.call
+            rescue => boom
+              @logger.error "#{self} failed: #{boom}"
+              error_handler.call(boom, self) if error_handler
+            end
+
+            nil # do not retain thread return value
+          end
+        end
 
         ran!(time)
       end

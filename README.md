@@ -20,7 +20,9 @@ r = Redis.new
 Zhong.schedule(redis: r) do |s|
   s.category "stuff" do
     s.every(5.seconds, "foo") { puts "foo" }
+    s.every(1.minute, "biz", at: ["**:26", "**:27"]) { puts "biz" }
     s.every(1.week, "baz", at: ["mon 22:45", "wed 23:13"]) { puts "baz" }
+    s.every(10.seconds, "boom") { raise "fail" }
   end
 
   s.category "clutter" do
@@ -39,8 +41,11 @@ Zhong.schedule(redis: r) do |s|
     puts "dong"
     true
   end
-end
 
+  s.error_handler do |e, job|
+    puts "damn, #{job} messed up: #{e}"
+  end
+end
 ```
 
 ## TODO

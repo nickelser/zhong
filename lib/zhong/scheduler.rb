@@ -39,7 +39,7 @@ module Zhong
     end
 
     def on(event, &block)
-      fail "Unsupported callback #{event}" unless [:before_tick, :after_tick, :before_run, :after_run].include?(event.to_sym)
+      fail "unknown callback #{event}" unless [:before_tick, :after_tick, :before_run, :after_run].include?(event.to_sym)
       (@callbacks[event.to_sym] ||= []) << block
     end
 
@@ -56,7 +56,7 @@ module Zhong
 
           jobs.each do |_, job|
             if fire_callbacks(:before_run, job, now)
-              job.run(now)
+              job.run(now, error_handler)
               fire_callbacks(:after_run, job, now)
             end
           end

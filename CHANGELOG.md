@@ -1,3 +1,8 @@
+## 0.1.3
+
+- Fix several memory leaks.
+- Add a proper error handler block.
+
 ## 0.1.2
 
 - Fix bug with setting `at` like "**:35".
