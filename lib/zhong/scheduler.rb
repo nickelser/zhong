@@ -19,7 +19,7 @@ module Zhong
     end
 
     def category(name)
-      fail "cannot nest categories: #{name} would be nested in #{@category}" if @category
+      fail "cannot nest categories: #{name} would be nested in #{@category} (#{caller.first})" if @category
 
       @category = name.to_s
 
@@ -29,6 +29,7 @@ module Zhong
     end
 
     def every(period, name, opts = {}, &block)
+      fail "must specify a period for #{name} (#{caller.first})" unless period
       job = Job.new(name, opts.merge(@config).merge(every: period, category: @category), &block)
       add(job)
     end

@@ -13,7 +13,7 @@ module Zhong
         @logger.error "warning: #{self} has `at` but no `every`; could run far more often than expected!"
       end
 
-      fail "must specific either `at` or `every` for a job" unless @at || @every
+      fail "must specific either `at` or `every` for job: #{self}" unless @at || @every
 
       @block = block
 
