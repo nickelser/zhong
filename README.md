@@ -1,6 +1,8 @@
 # Zhong
 
-Useful, reliable distributed cron.
+Useful, reliable distributed cron. Tired of your cron-like scheduler running key jobs twice? Would you like to be able to run your cron server on multiple machines and have it "just work"? Have we got the gem for you.
+
+Zhong uses Redis to acquire exclusive locks on jobs, as well as recording when they last ran. This means that you can rest easy at night, knowing that your customers are getting their monthly Goat Fancy magazine subscriptions and you are rolling around in your piles of money without a care in the world.
 
 # Installation
 
@@ -18,13 +20,25 @@ r = Redis.new
 Zhong.schedule(redis: r) do |s|
   s.category "stuff" do
     s.every(5.seconds, "foo") { puts "foo" }
-    s.every(1.week, "baz", at: "mon 22:45") { puts "baz" }
+    s.every(1.week, "baz", at: ["mon 22:45", "wed 23:13"]) { puts "baz" }
   end
 
   s.category "clutter" do
-    s.every(1.second, "compute", if: -> (t) { rand < 0.5 }) { puts "something happened" }
+    s.every(1.second, "compute", if: -> (t) { t.wday == 3 && rand < 0.5 }) { puts "something happened on wednesday" }
+  end
+
+  # note: callbacks that return nil or false will cause event to not run
+  s.on(:before_tick) do
+    puts "ding"
+    true
+  end
+
+  s.on(:after_tick) do
+    puts "dong"
+    true
   end
 end
+
 ```
 
 ## TODO

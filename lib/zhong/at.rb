@@ -43,6 +43,11 @@ module Zhong
     def self.parse(at, grace: 0)
       return unless at
 
+      # TODO: refactor this mess
+      if at.respond_to?(:each)
+        return MultiAt.new(at.map { |a| parse(a, grace: grace) })
+      end
+
       case at
       when /\A([[:alpha:]]+)\s+(.*)\z/
         wday = WDAYS[$1]
@@ -65,6 +70,18 @@ module Zhong
       end
     rescue ArgumentError
       throw FailedToParse, at
+    end
+  end
+
+  class MultiAt
+    attr_accessor :ats
+
+    def initialize(ats = [])
+      @ats = ats
+    end
+
+    def next_at(time = Time.now)
+      ats.map { |at| at.next_at(time) }.min
     end
   end
 end

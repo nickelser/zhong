@@ -12,6 +12,7 @@ module Zhong
 
     def initialize(config = {})
       @jobs = {}
+      @callbacks = {}
       @config = DEFAULT_CONFIG.merge(config)
       @logger = @config[:logger] ||= Util.default_logger
       @redis = @config[:redis] ||= Redis.new(ENV["REDIS_URL"])
@@ -28,7 +29,18 @@ module Zhong
     end
 
     def every(period, name, opts = {}, &block)
-      add(Job.new(name, opts.merge(@config).merge(every: period, category: @category), &block))
+      job = Job.new(name, opts.merge(@config).merge(every: period, category: @category), &block)
+      add(job)
+    end
+
+    def error_handler(&block)
+      @error_handler = block if block_given?
+      @error_handler
+    end
+
+    def on(event, &block)
+      fail "Unsupported callback #{event}" unless [:before_tick, :after_tick, :before_run, :after_run].include?(event.to_sym)
+      (@callbacks[event.to_sym] ||= []) << block
     end
 
     def start
@@ -39,11 +51,20 @@ module Zhong
       @logger.info "starting at #{redis_time}"
 
       loop do
-        now = redis_time
+        if fire_callbacks(:before_tick)
+          now = redis_time
 
-        jobs.each { |_, job| job.run(now) }
+          jobs.each do |_, job|
+            if fire_callbacks(:before_run, job, now)
+              job.run(now)
+              fire_callbacks(:after_run, job, now)
+            end
+          end
 
-        sleep(interval)
+          fire_callbacks(:after_tick)
+
+          sleep(interval)
+        end
 
         break if @stop
       end
@@ -54,6 +75,10 @@ module Zhong
       @stop = true
       jobs.values.each(&:stop)
       Thread.new { @logger.info "stopped" }
+    end
+
+    def fire_callbacks(event, *args)
+      @callbacks[event].to_a.all? { |h| h.call(*args) }
     end
 
     private

@@ -95,7 +95,7 @@ module Zhong
 
     def next_at
       every_time = @every.next_at(@last_ran) if @last_ran && @every
-      at_time = @at.next_at(time) if @at
+      at_time = @at.next_at(Time.now) if @at
       [every_time, at_time, Time.now].compact.max || "now"
     end
 
