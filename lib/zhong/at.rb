@@ -27,7 +27,8 @@ module Zhong
     def next_at(time = Time.now)
       at_time = @wday.nil? ? time.dup : (time + (@wday - time.wday).days)
 
-      at_time = at_time.change(hour: @hour, min: @minute)
+      at_time = at_time.change(min: @minute)
+      at_time = at_time.change(hour: @hour) if @hour
 
       if at_time < @grace.ago
         if @wday.nil?
