@@ -63,6 +63,8 @@ module Zhong
 
           fire_callbacks(:after_tick)
 
+          GC.start
+
           sleep(interval)
         end
 

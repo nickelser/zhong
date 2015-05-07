@@ -40,15 +40,20 @@ module Zhong
       end
 
       @thread = nil
+      locked = false
 
-      ran_set = @lock.lock do
+      @lock.lock do
+        locked = true
+
         refresh_last_ran
 
-        break true unless run?(time)
+        # we need to check again, as another process might have acquired
+        # the lock right before us and obviated our need to do anything
+        break unless run?(time)
 
         if disabled?
           @logger.info "disabled: #{self}"
-          break true
+          break
         end
 
         @logger.info "running: #{self}"
@@ -58,7 +63,7 @@ module Zhong
         ran!(time)
       end
 
-      @logger.info "unable to acquire exclusive run lock: #{self}" unless ran_set
+      @logger.info "unable to acquire exclusive run lock: #{self}" unless locked
     end
 
     def stop
