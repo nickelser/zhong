@@ -24,7 +24,9 @@ Zhong.schedule(redis: r) do |s|
   end
 
   s.category "clutter" do
-    s.every(1.second, "compute", if: -> (t) { t.wday == 3 && rand < 0.5 }) { puts "something happened on wednesday" }
+    s.every(1.second, "compute", if: -> (t) { t.wday == 3 && rand < 0.5 }) do
+      puts "something happened on wednesday, maybe"
+    end
   end
 
   # note: callbacks that return nil or false will cause event to not run
