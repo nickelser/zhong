@@ -13,6 +13,12 @@ module Zhong
 
     def initialize(period)
       @period = period
+
+      fail ArgumentError unless valid?
+    end
+
+    private def valid?
+      @period.to_f > 1
     end
 
     def next_at(last = Time.now)
@@ -20,8 +26,6 @@ module Zhong
     end
 
     def self.parse(every)
-      return unless every
-
       case every
       when Numeric, ActiveSupport::Duration
         new(every)
