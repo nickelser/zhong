@@ -17,22 +17,35 @@ module Zhong
 
     attr_accessor :minute, :hour, :wday
 
-    def initialize(minute: nil, hour: nil, wday: nil, grace: 0.minutes)
+    def initialize(minute: nil, hour: nil, wday: nil, grace: 0.seconds)
       @minute = minute
       @hour = hour
       @wday = wday
       @grace = grace
+
+      fail ArgumentError unless valid?
     end
 
     def next_at(time = Time.now)
       at_time = @wday.nil? ? time.dup : (time + (@wday - time.wday).days)
 
-      at_time = at_time.change(min: @minute)
-      at_time = at_time.change(hour: @hour) if @hour
+      at_time = if !@minute.nil? && !@hour.nil?
+        at_time.change(hour: @hour, min: @minute)
+      elsif !@minute.nil?
+        at_time.change(min: @minute)
+      elsif !@hour.nil? && @hour != time.hour
+        at_time.change(hour: @hour)
+      else
+        at_time.change(sec: 0)
+      end
 
-      if at_time < @grace.ago
+      if at_time < (time.change(sec: 0) - @grace)
         if @wday.nil?
-          at_time += 1.day
+          if @hour.nil?
+            at_time += 1.hour
+          else
+            at_time += 1.day
+          end
         else
           at_time += 1.week
         end
@@ -41,7 +54,13 @@ module Zhong
       end
     end
 
-    def self.parse(at, grace: 0)
+    private def valid?
+      (@minute.nil? || (0..59).cover?(@minute)) &&
+        (@hour.nil? || (0..23).cover?(@hour)) &&
+        (@wday.nil? || (0..6).cover?(@wday))
+    end
+
+    def self.parse(at, grace: 0.seconds)
       return unless at
 
       # TODO: refactor this mess
@@ -51,7 +70,7 @@ module Zhong
 
       case at
       when /\A([[:alpha:]]+)\s+(.*)\z/
-        wday = WDAYS[$1]
+        wday = WDAYS[$1.downcase]
 
         if wday
           parsed_time = parse($2, grace: grace)
@@ -65,12 +84,12 @@ module Zhong
       when /\A\*{1,2}:(\d\d)\z/
         new(minute: $1.to_i, grace: grace)
       when /\A(\d{1,2}):\*{1,2}\z/
-        new(hour: $1, grace: grace)
+        new(hour: $1.to_i, grace: grace)
       else
         fail FailedToParse, at
       end
     rescue ArgumentError
-      throw FailedToParse, at
+      fail FailedToParse, at
     end
   end
 

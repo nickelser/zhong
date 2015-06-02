@@ -1,3 +1,8 @@
+## 0.1.4
+
+- Fix several bugs related to time parsing.
+- In a totally unrelated change, add some tests around time parsing.
+
 ## 0.1.3
 
 - Fix several memory leaks.

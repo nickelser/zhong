@@ -8,7 +8,7 @@ module Zhong
       month: 1.month,
       semiannual: 6.months, # enterprise!
       year: 1.year,
-      decade: 10.year
+      decade: 10.years
     }.freeze
 
     def initialize(period)
