@@ -8,8 +8,6 @@ module Zhong
       long_running_timeout: 5.minutes
     }.freeze
 
-    TRAPPED_SIGNALS = %w(QUIT INT TERM).freeze
-
     def initialize(config = {})
       @jobs = {}
       @callbacks = {}
@@ -45,28 +43,21 @@ module Zhong
     end
 
     def start
-      TRAPPED_SIGNALS.each do |sig|
-        Signal.trap(sig) { stop }
-      end
-
       @logger.info "starting at #{redis_time}"
+
+      trap_signals
 
       loop do
         if fire_callbacks(:before_tick)
           now = redis_time
 
-          jobs.each do |_, job|
-            if fire_callbacks(:before_run, job, now)
-              job.run(now, error_handler)
-              fire_callbacks(:after_run, job, now)
-            end
+          jobs_to_run(now).each do |_, job|
+            run_job(job, now)
           end
 
           fire_callbacks(:after_tick)
 
-          GC.start
-
-          sleep(interval)
+          sleep_until_next_tick
         end
 
         break if @stop
@@ -84,7 +75,28 @@ module Zhong
       @callbacks[event].to_a.all? { |h| h.call(*args) }
     end
 
+    def jobs_to_run(time = redis_time)
+      jobs.select { |_, job| job.run?(time) }
+    end
+
+    def run_job(job, time = redis_time)
+      return unless fire_callbacks(:before_run, job, time)
+
+      job.run(time, error_handler)
+
+      fire_callbacks(:after_run, job, time)
+    end
+
     private
+
+    TRAPPED_SIGNALS = %w(QUIT INT TERM).freeze
+    private_constant :TRAPPED_SIGNALS
+
+    def trap_signals
+      TRAPPED_SIGNALS.each do |sig|
+        Signal.trap(sig) { stop }
+      end
+    end
 
     def add(job)
       if @jobs.key?(job.to_s)
@@ -95,8 +107,9 @@ module Zhong
       @jobs[job.to_s] = job
     end
 
-    def interval
-      1.0 - Time.now.subsec + 0.001
+    def sleep_until_next_tick
+      GC.start
+      sleep(1.0 - Time.now.subsec + 0.001)
     end
 
     def redis_time

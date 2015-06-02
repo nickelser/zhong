@@ -32,6 +32,15 @@ class TestEvery < Minitest::Test
     assert_equal time_in_day(0, 0, 1, 29), every.next_at(time_in_day(23, 59, 0, 59))
   end
 
+  def test_duration_1s
+    every = Zhong::Every.parse(1.second)
+
+    assert_equal time_in_day(16, 20, 0, 1), every.next_at(time_in_day(16, 20))
+    assert_equal time_in_day(16, 20, 0, 11), every.next_at(time_in_day(16, 20, 0, 10))
+    assert_equal time_in_day(16, 20, 0, 16), every.next_at(time_in_day(16, 20, 0, 15))
+    assert_equal time_in_day(0, 0, 1, 0), every.next_at(time_in_day(23, 59, 0, 59))
+  end
+
   def test_duration_3_weeks
     every = Zhong::Every.parse(3.weeks)
 
@@ -83,6 +92,12 @@ class TestEvery < Minitest::Test
   def test_nil_argument
     assert_raises Zhong::Every::FailedToParse do
       Zhong::Every.parse(nil)
+    end
+  end
+
+  def test_invalid_blank
+    assert_raises Zhong::Every::FailedToParse do
+      Zhong::Every.parse("")
     end
   end
 end

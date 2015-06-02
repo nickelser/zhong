@@ -18,7 +18,7 @@ module Zhong
     end
 
     private def valid?
-      @period.to_f > 1
+      @period.to_f >= 1
     end
 
     def next_at(last = Time.now)

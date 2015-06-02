@@ -127,15 +127,45 @@ class TestAt < Minitest::Test
     assert_equal time_in_day(12, 59, 10), at.next_at(time_in_day(13, 01, 6, 01))
   end
 
+  def test_multi_at
+    at = Zhong::At.parse(["8:20", "tues 12:30"])
+
+    assert_equal time_in_day(8, 20), at.next_at(time_in_day(8, 15))
+    assert_equal time_in_day(8, 20), at.next_at(time_in_day(8, 20))
+    assert_equal time_in_day(8, 20, 1), at.next_at(time_in_day(8, 21))
+    assert_equal time_in_day(12, 30, 1), at.next_at(time_in_day(8, 21, 1))
+    assert_equal time_in_day(12, 30, 1), at.next_at(time_in_day(12, 30, 1))
+    assert_equal time_in_day(8, 20, 2), at.next_at(time_in_day(12, 31, 1))
+    assert_equal time_in_day(8, 20, 3), at.next_at(time_in_day(12, 31, 2))
+  end
+
   def test_invalid_time_32
     assert_raises Zhong::At::FailedToParse do
       Zhong::At.parse("32:00")
     end
   end
 
+  def test_invalid_multi_at
+    assert_raises Zhong::At::FailedToParse do
+      Zhong::At.parse(["12:*", "31:00"])
+    end
+  end
+
   def test_invalid_multi_line_time_sat_12
     assert_raises Zhong::At::FailedToParse do
       Zhong::At.parse("sat 12:00\nreally invalid time")
+    end
+  end
+
+  def test_invalid_nil
+    assert_raises Zhong::At::FailedToParse do
+      Zhong::At.parse(nil)
+    end
+  end
+
+  def test_invalid_blank
+    assert_raises Zhong::At::FailedToParse do
+      Zhong::At.parse("")
     end
   end
 end

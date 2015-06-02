@@ -6,8 +6,8 @@ module Zhong
       @name = name
       @category = config[:category]
 
-      @at = At.parse(config[:at], grace: config.fetch(:grace, 15.minutes))
-      @every = Every.parse(config[:every])
+      @at = At.parse(config[:at], grace: config.fetch(:grace, 15.minutes)) if config[:at]
+      @every = Every.parse(config[:every]) if config[:every]
 
       if @at && !@every
         @logger.error "warning: #{self} has `at` but no `every`; could run far more often than expected!"
