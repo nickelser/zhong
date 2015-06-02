@@ -1,24 +1,20 @@
 module Zhong
   class Job
-    attr_reader :name, :category
+    attr_reader :name, :category, :last_ran
 
     def initialize(name, config = {}, &block)
       @name = name
       @category = config[:category]
+      @logger = config[:logger]
 
       @at = At.parse(config[:at], grace: config.fetch(:grace, 15.minutes)) if config[:at]
       @every = Every.parse(config[:every]) if config[:every]
-
-      if @at && !@every
-        @logger.error "warning: #{self} has `at` but no `every`; could run far more often than expected!"
-      end
 
       fail "must specific either `at` or `every` for job: #{self}" unless @at || @every
 
       @block = block
 
       @redis = config[:redis]
-      @logger = config[:logger]
       @tz = config[:tz]
       @if = config[:if]
       @lock = Suo::Client::Redis.new(lock_key, client: @redis, stale_lock_expiration: config[:long_running_timeout])
@@ -41,40 +37,46 @@ module Zhong
 
       @thread = nil
       locked = false
+      errored = false
 
-      @lock.lock do
-        locked = true
+      begin
+        @lock.lock do
+          locked = true
 
-        refresh_last_ran
+          refresh_last_ran
 
-        # we need to check again, as another process might have acquired
-        # the lock right before us and obviated our need to do anything
-        break unless run?(time)
+          # we need to check again, as another process might have acquired
+          # the lock right before us and obviated our need to do anything
+          break unless run?(time)
 
-        if disabled?
-          @logger.info "disabled: #{self}"
-          break
-        end
-
-        @logger.info "running: #{self}"
-
-        if @block
-          @thread = Thread.new do
-            begin
-              @block.call
-            rescue => boom
-              @logger.error "#{self} failed: #{boom}"
-              error_handler.call(boom, self) if error_handler
-            end
-
-            nil # do not retain thread return value
+          if disabled?
+            @logger.info "disabled: #{self}"
+            break
           end
-        end
 
-        ran!(time)
+          @logger.info "running: #{self}"
+
+          if @block
+            @thread = Thread.new do
+              begin
+                @block.call
+              rescue => boom
+                @logger.error "#{self} failed: #{boom}"
+                error_handler.call(boom, self) if error_handler
+              end
+
+              nil # do not retain thread return value
+            end
+          end
+
+          ran!(time)
+        end
+      rescue Suo::LockClientError => boom
+        @logger.error "unable to run due to client error: #{boom}"
+        errored = true
       end
 
-      @logger.info "unable to acquire exclusive run lock: #{self}" unless locked
+      @logger.info "unable to acquire exclusive run lock: #{self}" if !locked && !errored
     end
 
     def stop
@@ -89,7 +91,7 @@ module Zhong
     end
 
     def refresh_last_ran
-      last_ran_val = @redis.get(run_time_key)
+      last_ran_val = @redis.get(last_ran_key)
       @last_ran = last_ran_val ? Time.at(last_ran_val.to_i) : nil
     end
 
@@ -115,6 +117,10 @@ module Zhong
       [every_time, at_time, Time.now].compact.max || "now"
     end
 
+    def clear
+      @redis.del(last_ran_key)
+    end
+
     private
 
     def run_every?(time)
@@ -131,10 +137,10 @@ module Zhong
 
     def ran!(time)
       @last_ran = time
-      @redis.set(run_time_key, @last_ran.to_i)
+      @redis.set(last_ran_key, @last_ran.to_i)
     end
 
-    def run_time_key
+    def last_ran_key
       "zhong:last_ran:#{self}"
     end
 

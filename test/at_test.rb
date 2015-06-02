@@ -145,6 +145,12 @@ class TestAt < Minitest::Test
     end
   end
 
+  def test_invalid_time_caturday
+    assert_raises Zhong::At::FailedToParse do
+      Zhong::At.parse("caturday 12:00")
+    end
+  end
+
   def test_invalid_multi_at
     assert_raises Zhong::At::FailedToParse do
       Zhong::At.parse(["12:*", "31:00"])
