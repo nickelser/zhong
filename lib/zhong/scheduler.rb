@@ -5,15 +5,18 @@ module Zhong
     DEFAULT_CONFIG = {
       timeout: 0.5,
       grace: 15.minutes,
-      long_running_timeout: 5.minutes
+      long_running_timeout: 5.minutes,
+      tz: nil
     }.freeze
 
     def initialize(config = {})
       @jobs = {}
       @callbacks = {}
       @config = DEFAULT_CONFIG.merge(config)
-      @logger = @config[:logger] ||= Util.default_logger
-      @redis = @config[:redis] ||= Redis.new(ENV["REDIS_URL"])
+      
+      @logger = @config[:logger]
+      @redis = @config[:redis]
+      @tz = @config[:tz]
     end
 
     def category(name)
@@ -28,8 +31,15 @@ module Zhong
 
     def every(period, name, opts = {}, &block)
       fail "must specify a period for #{name} (#{caller.first})" unless period
+
       job = Job.new(name, opts.merge(@config).merge(every: period, category: @category), &block)
-      add(job)
+
+      if jobs.key?(job.to_s)
+        @logger.error "duplicate job #{job}, skipping"
+        return
+      end
+      
+      @jobs[job.to_s] = job
     end
 
     def error_handler(&block)
@@ -45,6 +55,8 @@ module Zhong
     def start
       @logger.info "starting at #{redis_time}"
 
+      @stop = false
+
       trap_signals
 
       loop do
@@ -57,19 +69,24 @@ module Zhong
 
           fire_callbacks(:after_tick)
 
-          sleep_until_next_tick
+          sleep_until_next_second
         end
 
         break if @stop
       end
+
+      Thread.new { @logger.info "stopped" }
     end
 
     def stop
       Thread.new { @logger.error "stopping" } # thread necessary due to trap context
       @stop = true
-      jobs.values.each(&:stop)
-      Thread.new { @logger.info "stopped" }
     end
+
+    private
+
+    TRAPPED_SIGNALS = %w(QUIT INT TERM).freeze
+    private_constant :TRAPPED_SIGNALS
 
     def fire_callbacks(event, *args)
       @callbacks[event].to_a.all? { |h| h.call(*args) }
@@ -87,35 +104,21 @@ module Zhong
       fire_callbacks(:after_run, job, time)
     end
 
-    private
-
-    TRAPPED_SIGNALS = %w(QUIT INT TERM).freeze
-    private_constant :TRAPPED_SIGNALS
-
     def trap_signals
       TRAPPED_SIGNALS.each do |sig|
         Signal.trap(sig) { stop }
       end
     end
 
-    def add(job)
-      if @jobs.key?(job.to_s)
-        @logger.error "duplicate job #{job}, skipping"
-        return
-      end
-
-      @jobs[job.to_s] = job
-    end
-
-    def sleep_until_next_tick
+    def sleep_until_next_second
       GC.start
-      sleep(1.0 - Time.now.subsec + 0.001)
+      sleep(1.0 - Time.now.subsec + 0.0001)
     end
 
     def redis_time
       s, ms = @redis.time # returns [seconds since epoch, microseconds]
       now = Time.at(s + ms / (10**6))
-      config[:tz] ? now.in_time_zone(config[:tz]) : now
+      @tz ? now.in_time_zone(@tz) : now
     end
   end
 end

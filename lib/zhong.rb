@@ -5,8 +5,6 @@ require "active_support/time"
 
 require "zhong/version"
 
-require "zhong/util"
-
 require "zhong/at"
 require "zhong/every"
 
@@ -15,19 +13,32 @@ require "zhong/scheduler"
 
 module Zhong
   class << self
-    def schedule(**opts)
-      @scheduler = Scheduler.new(opts).tap do |s|
-        yield(s)
-      end
-    end
+    attr_writer :logger, :redis
+  end
 
-    def start
-      fail "You must run `Zhong.schedule` first" unless scheduler
-      scheduler.start
-    end
+  def self.schedule(&block)
+    scheduler.instance_eval(&block) if block_given?
+  end
 
-    def scheduler
-      @scheduler
+  def self.start
+    scheduler.start
+  end
+
+  def self.stop
+    scheduler.stop
+  end
+
+  def self.scheduler
+    @scheduler ||= Scheduler.new(logger: logger, redis: redis)
+  end
+
+  def self.logger
+    @logger ||= Logger.new(STDOUT).tap do |logger|
+      logger.formatter = -> (_, datetime, _, msg) { "#{datetime}: #{msg}\n" }
     end
+  end
+
+  def self.redis
+    @redis ||= Redis.new(url: ENV["REDIS_URL"])
   end
 end

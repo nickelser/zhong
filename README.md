@@ -15,34 +15,37 @@ gem 'zhong'
 ## Usage
 
 ```ruby
-r = Redis.new
+Zhong.redis = Redis.new(ENV["ZHONG_REDIS_URL"])
 
-Zhong.schedule(redis: r) do |s|
-  s.category "stuff" do
-    s.every(5.seconds, "foo") { puts "foo" }
-    s.every(1.minute, "biz", at: ["**:26", "**:27"]) { puts "biz" }
-    s.every(1.week, "baz", at: ["mon 22:45", "wed 23:13"]) { puts "baz" }
-    s.every(10.seconds, "boom") { raise "fail" }
+Zhong.schedule do
+  category "stuff" do
+    every 5.seconds, "foo" do
+      puts "foo"
+    end
+
+    every(1.minute, "biz", at: ["**:26", "**:27"]) { puts "biz" }
+    every(1.week, "baz", at: ["mon 22:45", "wed 23:13"]) { puts "baz" }
+    every(10.seconds, "boom") { raise "fail" }
   end
 
-  s.category "clutter" do
-    s.every(1.second, "compute", if: -> (t) { t.wday == 3 && rand < 0.5 }) do
+  category "clutter" do
+    every(1.second, "compute", if: -> (t) { t.wday == 3 && rand < 0.5 }) do
       puts "something happened on wednesday, maybe"
     end
   end
 
   # note: callbacks that return nil or false will cause event to not run
-  s.on(:before_tick) do
+  on(:before_tick) do
     puts "ding"
     true
   end
 
-  s.on(:after_tick) do
+  on(:after_tick) do
     puts "dong"
     true
   end
 
-  s.error_handler do |e, job|
+  error_handler do |e, job|
     puts "damn, #{job} messed up: #{e}"
   end
 end

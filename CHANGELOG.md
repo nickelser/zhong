@@ -1,3 +1,8 @@
+## 0.1.5
+
+- Improve the API.
+- Add scheduler test.
+
 ## 0.1.4
 
 - Fix several bugs related to time parsing.

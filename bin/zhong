@@ -2,14 +2,18 @@
 
 STDERR.sync = STDOUT.sync = true
 
-require "bundler/setup"
 require "zhong"
 
-usage = "zhong <zhong.rb>"
-file = ARGV.shift || abort(usage)
+file = ARGV.shift or abort "zhong <path to zhong.rb>"
 
 file = "./#{file}" unless file.match(/^[\/.]/)
 
 require file
 
-Zhong.start
+begin
+  Zhong.start
+rescue => boom
+  STDERR.puts boom.message
+  STDERR.puts boom.backtrace.join("\n")
+  exit 1
+end
