@@ -14,7 +14,7 @@ module Zhong
     def initialize(period)
       @period = period
 
-      fail ArgumentError unless valid?
+      fail "`every` must be >= 1 second" unless valid?
     end
 
     private def valid?

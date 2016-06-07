@@ -1,6 +1,6 @@
 module Zhong
   class Job
-    attr_reader :name, :category, :last_ran
+    attr_reader :name, :category, :last_ran, :logger
 
     def initialize(name, config = {}, &block)
       @name = name
@@ -17,8 +17,8 @@ module Zhong
       @redis = config[:redis]
       @tz = config[:tz]
       @if = config[:if]
-      @lock = Suo::Client::Redis.new(lock_key, client: @redis, stale_lock_expiration: config[:long_running_timeout])
-      @timeout = 5
+      @long_running_timeout = config[:long_running_timeout]
+      @running = false
 
       refresh_last_ran
     end
@@ -30,18 +30,13 @@ module Zhong
     def run(time = Time.now, error_handler = nil)
       return unless run?(time)
 
-      if running?
-        @logger.info "already running: #{self}"
-        return
-      end
-
-      @thread = nil
       locked = false
       errored = false
 
       begin
-        @lock.lock do
+        redis_lock.lock do
           locked = true
+          @running = true
 
           refresh_last_ran
 
@@ -50,44 +45,35 @@ module Zhong
           break unless run?(time)
 
           if disabled?
-            @logger.info "disabled: #{self}"
+            logger.info "disabled: #{self}"
             break
           end
 
-          @logger.info "running: #{self}"
+          logger.info "running: #{self}"
 
           if @block
-            @thread = Thread.new do
-              begin
-                @block.call
-              rescue => boom
-                @logger.error "#{self} failed: #{boom}"
-                error_handler.call(boom, self) if error_handler
-              end
-
-              nil # do not retain thread return value
+            begin
+              @block.call
+            rescue => boom
+              logger.error "#{self} failed: #{boom}"
+              error_handler.call(boom, self) if error_handler
             end
           end
 
           ran!(time)
         end
       rescue Suo::LockClientError => boom
-        @logger.error "unable to run due to client error: #{boom}"
+        logger.error "unable to run due to client error: #{boom}"
         errored = true
       end
 
-      @logger.info "unable to acquire exclusive run lock: #{self}" if !locked && !errored
-    end
+      @running = false
 
-    def stop
-      return unless running?
-      Thread.new { @logger.error "killing #{self} due to stop" } # thread necessary due to trap context
-      @thread.join(@timeout)
-      @thread.kill
+      logger.info "unable to acquire exclusive run lock: #{self}" if !locked && !errored
     end
 
     def running?
-      @thread && @thread.alive?
+      @running
     end
 
     def refresh_last_ran
@@ -138,6 +124,10 @@ module Zhong
     def ran!(time)
       @last_ran = time
       @redis.set(last_ran_key, @last_ran.to_i)
+    end
+
+    def redis_lock
+      @lock ||= Suo::Client::Redis.new(lock_key, client: @redis, stale_lock_expiration: @long_running_timeout)
     end
 
     def last_ran_key
