@@ -15,7 +15,7 @@ gem 'zhong'
 ## Usage
 
 ```ruby
-Zhong.redis = Redis.new(ENV["ZHONG_REDIS_URL"])
+Zhong.redis = Redis.new(url: ENV["ZHONG_REDIS_URL"])
 
 Zhong.schedule do
   category "stuff" do
