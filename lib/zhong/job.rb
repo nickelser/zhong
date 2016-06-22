@@ -1,11 +1,12 @@
 module Zhong
   class Job
-    attr_reader :name, :category, :last_ran, :logger
+    attr_reader :name, :category, :last_ran, :logger, :at, :every
 
     def initialize(name, config = {}, &block)
       @name = name
       @category = config[:category]
       @logger = config[:logger]
+      @config = config
 
       @at = At.parse(config[:at], grace: config.fetch(:grace, 15.minutes)) if config[:at]
       @every = Every.parse(config[:every]) if config[:every]
@@ -107,7 +108,37 @@ module Zhong
       @redis.del(last_ran_key)
     end
 
+    def last_ran_key
+      "zhong:last_ran:#{self}"
+    end
+
+    def desired_at_key
+      "zhong:at:#{self}"
+    end
+
+    def disabled_key
+      "zhong:disabled:#{self}"
+    end
+
+    def lock_key
+      "zhong:lock:#{self}"
+    end
+
     private
+
+    def clear_last_ran_if_at_changed
+      previous_at_json = @redis.get(desired_at_key)
+
+      if previous_at
+        previous_at = At.parse(JSON.load(previous_at_json), grace: @config.fetch(:grace, 15.minutes))
+
+        if previous_at != @at
+          clear
+        end
+      end
+
+      @redis.set(desired_at_key, @config[:at].to_json)
+    end
 
     def run_every?(time)
       !@last_ran || !@every || @every.next_at(@last_ran) <= time
@@ -128,18 +159,6 @@ module Zhong
 
     def redis_lock
       @lock ||= Suo::Client::Redis.new(lock_key, client: @redis, stale_lock_expiration: @long_running_timeout)
-    end
-
-    def last_ran_key
-      "zhong:last_ran:#{self}"
-    end
-
-    def disabled_key
-      "zhong:disabled:#{self}"
-    end
-
-    def lock_key
-      "zhong:lock:#{self}"
     end
   end
 end

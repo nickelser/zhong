@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Zhong</title>
+
+    <meta charset="utf-8" />
+
+    <style>
+      body {
+        font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+        margin: 0;
+        padding: 20px;
+        font-size: 14px;
+        line-height: 1.4;
+        color: #333;
+      }
+
+      a, a:visited, a:active {
+        color: #428bca;
+        text-decoration: none;
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        border-spacing: 0;
+        margin-bottom: 20px;
+      }
+
+      th {
+        text-align: left;
+        border-bottom: solid 2px #ddd;
+      }
+
+      table td, table th {
+        padding: 8px;
+      }
+
+      td {
+        border-top: solid 1px #ddd;
+      }
+
+      .disabled {
+        background-color: pink;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <table>
+        <thead>
+          <tr>
+            <th>Job</th>
+            <th style="width: 15%;">Period</th>
+            <th style="width: 15%;">Last Run</th>
+            <th style="width: 15%;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @jobs.each do |job| %>
+            <% enabled = !@disabled[job.to_s] %>
+            <% last_run = @last_runs[job.to_s] %>
+            <tr class="<%= enabled ? "" : "disabled" %>">
+              <td><%= job %></td>
+              <td>
+                <% if job.every %>
+                  every <%= job.every %>
+                <% end %>
+                <% if job.at %>
+                  at <%= job.at %>
+                <% end %>
+              </td>
+              <td><%= relative_time(last_run ? Time.at(last_run.to_i) : nil) %></td>
+              <td>button here</td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </body>
+</html>

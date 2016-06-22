@@ -3,10 +3,11 @@ module Zhong
     class FailedToParse < StandardError; end
 
     EVERY_KEYWORDS = {
+      minute: 1.minute,
+      hour: 1.hour,
       day: 1.day,
       week: 1.week,
       month: 1.month,
-      semiannual: 6.months, # enterprise!
       year: 1.year,
       decade: 10.years
     }.freeze
@@ -15,6 +16,22 @@ module Zhong
       @period = period
 
       fail "`every` must be >= 1 second" unless valid?
+    end
+
+    def to_s
+      EVERY_KEYWORDS.to_a.reverse.each do |friendly, period|
+        if @period % period == 0
+          rem = @period / period
+
+          if rem == 1
+            return "#{rem} #{friendly}"
+          else
+            return "#{rem} #{friendly}s"
+          end
+        end
+      end
+
+      "#{@period.to_i} second#{@period.to_i == 1 ? '' : 's'}"
     end
 
     private def valid?

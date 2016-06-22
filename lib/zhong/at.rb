@@ -42,7 +42,35 @@ module Zhong
       end
     end
 
+    def to_s
+      str = "#{formatted_time(@hour)}:#{formatted_time(@minute)}"
+
+      if @wday
+        str += " on #{WDAYS.invert[@wday].capitalize}"
+      end
+
+      str
+    end
+
+    protected
+
+    def formatted_time(t)
+      if t.nil?
+        "**"
+      else
+        t.to_s.rjust(2, "0")
+      end
+    end
+
+    def ==(o)
+      o.class == self.class && o.state == state
+    end
+
     private
+
+    def state
+      [@minute, @hour, @wday, @grace]
+    end
 
     def at_time_hour_minute_adjusted(time)
       if @minute && @hour
@@ -111,8 +139,16 @@ module Zhong
       @ats = ats
     end
 
+    def ==(o)
+      o.class == self.class && @ats == o.ats
+    end
+
     def next_at(time = Time.now)
       ats.map { |at| at.next_at(time) }.min
+    end
+
+    def to_s
+      ats.map(&:to_s).join(", ")
     end
   end
 end

@@ -5,8 +5,8 @@ require "active_support/time"
 
 require "zhong/version"
 
-require "zhong/at"
 require "zhong/every"
+require "zhong/at"
 
 require "zhong/job"
 require "zhong/scheduler"
@@ -30,6 +30,10 @@ module Zhong
 
   def self.scheduler
     @scheduler ||= Scheduler.new(logger: logger, redis: redis)
+  end
+
+  def self.jobs
+    scheduler.jobs.values
   end
 
   def self.logger
