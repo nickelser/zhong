@@ -20,3 +20,4 @@ ratings:
   - "**.rb"
 exclude_paths:
 - test/
+- "**/*{.,-}min.js"
