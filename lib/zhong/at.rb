@@ -17,6 +17,20 @@ module Zhong
 
     attr_accessor :minute, :hour, :wday
 
+    def self.parse(at, grace: 0.seconds)
+      if at.respond_to?(:each)
+        MultiAt.new(at.map { |a| parse_at(a, grace) })
+      else
+        parse_at(at, grace)
+      end
+    rescue ArgumentError
+      fail FailedToParse, at
+    end
+
+    def self.deserialize(at)
+      parse_serialized(MessagePack.unpack(at))
+    end
+
     def initialize(minute: nil, hour: nil, wday: nil, grace: 0.seconds)
       @minute = minute
       @hour = hour
@@ -52,6 +66,14 @@ module Zhong
       str
     end
 
+    def as_json
+      {m: @minute, h: @hour, w: @wday, g: @grace}
+    end
+
+    def serialize
+      MessagePack.pack(as_json)
+    end
+
     protected
 
     def formatted_time(t)
@@ -66,10 +88,41 @@ module Zhong
       o.class == self.class && o.state == state
     end
 
+    def state
+      [@minute, @hour, @wday]
+    end
+
     private
 
-    def state
-      [@minute, @hour, @wday, @grace]
+    def self.parse_at(at, grace)
+      case at
+      when /\A([[:alpha:]]+)\s+(.*)\z/
+        wday = WDAYS[$1.downcase]
+
+        if wday
+          parsed_time = parse_at($2, grace)
+          parsed_time.wday = wday
+          parsed_time
+        else
+          fail FailedToParse, at
+        end
+      when /\A(\d{1,2}):(\d\d)\z/
+        new(minute: $2.to_i, hour: $1.to_i, grace: grace)
+      when /\A\*{1,2}:(\d\d)\z/
+        new(minute: $1.to_i, grace: grace)
+      when /\A(\d{1,2}):\*{1,2}\z/
+        new(hour: $1.to_i, grace: grace)
+      else
+        fail FailedToParse, at
+      end
+    end
+
+    def self.parse_serialized(at)
+      if at.is_a?(Array)
+        MultiAt.new(at.map { |a| parse_serialized(a) })
+      else
+        new(minute: at["m"], hour: at["h"], wday: at["w"], grace: at["g"])
+      end
     end
 
     def at_time_hour_minute_adjusted(time)
@@ -93,43 +146,6 @@ module Zhong
         (@hour.nil? || (0..23).cover?(@hour)) &&
         (@wday.nil? || (0..6).cover?(@wday))
     end
-
-    class << self
-      def parse(at, grace: 0.seconds)
-        if at.respond_to?(:each)
-          MultiAt.new(at.map { |a| parse_at(a, grace) })
-        else
-          parse_at(at, grace)
-        end
-      rescue ArgumentError
-        fail FailedToParse, at
-      end
-
-      private
-
-      def parse_at(at, grace)
-        case at
-        when /\A([[:alpha:]]+)\s+(.*)\z/
-          wday = WDAYS[$1.downcase]
-
-          if wday
-            parsed_time = parse_at($2, grace)
-            parsed_time.wday = wday
-            parsed_time
-          else
-            fail FailedToParse, at
-          end
-        when /\A(\d{1,2}):(\d\d)\z/
-          new(minute: $2.to_i, hour: $1.to_i, grace: grace)
-        when /\A\*{1,2}:(\d\d)\z/
-          new(minute: $1.to_i, grace: grace)
-        when /\A(\d{1,2}):\*{1,2}\z/
-          new(hour: $1.to_i, grace: grace)
-        else
-          fail FailedToParse, at
-        end
-      end
-    end
   end
 
   class MultiAt
@@ -149,6 +165,14 @@ module Zhong
 
     def to_s
       ats.map(&:to_s).join(", ")
+    end
+
+    def as_json
+      ats.map(&:as_json)
+    end
+
+    def serialize
+      MessagePack.pack(as_json)
     end
   end
 end

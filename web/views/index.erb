@@ -1,9 +1,13 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Zhong</title>
+    <title><%= environment_title_prefix %>Zhong</title>
 
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <meta name="google" content="notranslate" />
+
+    <script type="text/javascript" src="<%= root_path %>javascript/application.js"></script>
 
     <style>
       body {
@@ -50,22 +54,24 @@
     </style>
   </head>
   <body>
-    <div class="container">
+    <div>
       <table>
         <thead>
           <tr>
             <th>Job</th>
-            <th style="width: 15%;">Period</th>
+            <th style="width: 15%;">Scheduled</th>
             <th style="width: 15%;">Last Run</th>
+            <th style="width: 15%;">Next Run</th>
             <th style="width: 15%;">Action</th>
           </tr>
         </thead>
         <tbody>
           <% @jobs.each do |job| %>
             <% enabled = !@disabled[job.to_s] %>
+            <% enabled_str = enabled ? 'disable' : 'enable' -%>
             <% last_run = @last_runs[job.to_s] %>
             <tr class="<%= enabled ? "" : "disabled" %>">
-              <td><%= job %></td>
+              <td><%= h(job) %></td>
               <td>
                 <% if job.every %>
                   every <%= job.every %>
@@ -75,11 +81,32 @@
                 <% end %>
               </td>
               <td><%= relative_time(last_run ? Time.at(last_run.to_i) : nil) %></td>
-              <td>button here</td>
+              <td><%= relative_time(job.next_at) %></td>
+              <td>
+                <form method="POST" style="margin-top: 20px; margin-bottom: 10px;">
+                  <%= csrf_tag %>
+                  <div>
+                    <button type="submit" name="<%= enabled_str -%>" value="<%= job.id -%>" data-confirm="Are you sure you want to <%= enabled_str -%> this job?"><%= enabled_str.capitalize -%></button>
+                  </div>
+                </form>
+              </td>
             </tr>
           <% end %>
         </tbody>
       </table>
+    </div>
+    <div>
+      <h3>Hosts</h3>
+      <ul>
+      <% @hosts.each do |host| -%>
+        <li>
+          <strong><%= h(host[:host]) -%></strong> <em>(PID <%= host[:pid] -%>)</em>: last seen <%= relative_time(host[:last_seen]) -%>.
+        </li>
+      <% end -%>
+      </ul>
+    </div>
+    <div>
+      <small><%= product_version -%></small>
     </div>
   </body>
 </html>

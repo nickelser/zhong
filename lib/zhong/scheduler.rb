@@ -13,10 +13,12 @@ module Zhong
       @jobs = {}
       @callbacks = {}
       @config = DEFAULT_CONFIG.merge(config)
-      
+
       @logger = @config[:logger]
       @redis = @config[:redis]
       @tz = @config[:tz]
+      @category = nil
+      @error_handler = nil
     end
 
     def category(name)
@@ -34,12 +36,12 @@ module Zhong
 
       job = Job.new(name, opts.merge(@config).merge(every: period, category: @category), &block)
 
-      if jobs.key?(job.to_s)
+      if jobs.key?(job.id)
         @logger.error "duplicate job #{job}, skipping"
         return
       end
-      
-      @jobs[job.to_s] = job
+
+      @jobs[job.id] = job
     end
 
     def error_handler(&block)
@@ -64,18 +66,24 @@ module Zhong
           now = redis_time
 
           jobs_to_run(now).each do |_, job|
+            break if @stop
             run_job(job, now)
           end
 
+          break if @stop
+
           fire_callbacks(:after_tick)
 
+          heartbeat(now)
+
+          break if @stop
           sleep_until_next_second
         end
 
         break if @stop
       end
 
-      Thread.new { @logger.info "stopped" }
+      Thread.new { @logger.info "stopped" }.join
     end
 
     def stop
@@ -102,6 +110,14 @@ module Zhong
       job.run(time, error_handler)
 
       fire_callbacks(:after_run, job, time)
+    end
+
+    def heartbeat(time)
+      @redis.setex(heartbeat_key, @config[:grace].to_i, time.to_i)
+    end
+
+    def heartbeat_key
+      @heartbeat_key ||= "zhong:heartbeat:#{`hostname`.strip}##{Process.pid}"
     end
 
     def trap_signals

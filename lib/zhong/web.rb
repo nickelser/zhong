@@ -23,13 +23,49 @@ module Zhong
     helpers WebHelpers
 
     get '/' do
-      @jobs = Zhong.jobs
-      @last_runs = mget(@jobs, "last_ran")
-      @disabled = mget(@jobs, "disabled")
-
-      Rails.logger.info @last_runs
+      index
 
       erb :index
+    end
+
+    post '/' do
+      if params['disable']
+        if job = Zhong.jobs[params['disable']]
+          job.disable
+        end
+      elsif params['enable']
+        if job = Zhong.jobs[params['enable']]
+          job.enable
+        end
+      end
+
+      index
+
+      erb :index
+    end
+
+    def index
+      @jobs = Zhong.jobs.values
+      @last_runs = zhong_mget(@jobs, "last_ran")
+      @disabled = zhong_mget(@jobs, "disabled")
+      @hosts = safe_mget(Zhong.redis.scan_each(match: "zhong:heartbeat:*").to_a).map do |k, v|
+        host, pid = k.split("zhong:heartbeat:", 2)[1].split("#", 2)
+        {host: host, pid: pid, last_seen: Time.at(v.to_i)}
+      end
+    end
+
+    def zhong_mget(jobs, key)
+      keys = jobs.map(&:to_s)
+      ret = safe_mget(keys.map { |j| "zhong:#{key}:#{j}" })
+      Hash[keys.map { |j| [j, ret["zhong:#{key}:#{j}"]] }]
+    end
+
+    def safe_mget(keys)
+      if keys.length > 0
+        Zhong.redis.mapped_mget(*keys)
+      else
+        {}
+      end
     end
 
   end

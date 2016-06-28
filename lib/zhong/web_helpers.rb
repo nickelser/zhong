@@ -52,19 +52,6 @@ module Zhong
       end
     end
 
-    def mget(jobs, key)
-      if jobs.length > 0
-        keys = jobs.map(&:to_s)
-        ret = Zhong.redis.mapped_mget(*keys.map { |j| "zhong:#{key}:#{j}" })
-        Rails.logger.info "rawr: #{ret}"
-        ret2 = Hash[keys.map { |j| [j, ret["zhong:#{key}:#{j}"]] }]
-        Rails.logger.info "rawr2: #{ret2}"
-        ret2
-      else
-        {}
-      end
-    end
-
     def number_with_delimiter(number)
       begin
         Float(number)

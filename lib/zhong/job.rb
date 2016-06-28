@@ -1,15 +1,15 @@
 module Zhong
   class Job
-    attr_reader :name, :category, :last_ran, :logger, :at, :every
+    attr_reader :name, :category, :last_ran, :logger, :at, :every, :id
 
-    def initialize(name, config = {}, &block)
-      @name = name
+    def initialize(job_name, config = {}, &block)
+      @name = job_name
       @category = config[:category]
       @logger = config[:logger]
       @config = config
 
-      @at = At.parse(config[:at], grace: config.fetch(:grace, 15.minutes)) if config[:at]
-      @every = Every.parse(config[:every]) if config[:every]
+      @at = config[:at] ? At.parse(config[:at], grace: config.fetch(:grace, 15.minutes)) : nil
+      @every = config[:every] ? Every.parse(config[:every]) : nil
 
       fail "must specific either `at` or `every` for job: #{self}" unless @at || @every
 
@@ -20,11 +20,17 @@ module Zhong
       @if = config[:if]
       @long_running_timeout = config[:long_running_timeout]
       @running = false
-
-      refresh_last_ran
+      @first_run = true
+      @id = Digest::SHA256.hexdigest(@name)
     end
 
     def run?(time = Time.now)
+      if @first_run
+        clear_last_ran_if_at_changed if @at
+        refresh_last_ran
+        @first_run = false
+      end
+
       run_every?(time) && run_at?(time) && run_if?(time)
     end
 
@@ -46,7 +52,7 @@ module Zhong
           break unless run?(time)
 
           if disabled?
-            logger.info "disabled: #{self}"
+            logger.info "not running, disabled: #{self}"
             break
           end
 
@@ -95,7 +101,7 @@ module Zhong
     end
 
     def to_s
-      [@category, @name].compact.join(".").freeze
+      @to_s ||= [@category, @name].compact.join(".").freeze
     end
 
     def next_at
@@ -126,18 +132,21 @@ module Zhong
 
     private
 
+    # if the @at value is changed across runs, the last_run becomes invalid
+    # so clear it
     def clear_last_ran_if_at_changed
-      previous_at_json = @redis.get(desired_at_key)
+      previous_at_msgpack = @redis.get(desired_at_key)
 
-      if previous_at
-        previous_at = At.parse(JSON.load(previous_at_json), grace: @config.fetch(:grace, 15.minutes))
+      if previous_at_msgpack
+        previous_at = At.deserialize(previous_at_msgpack)
 
         if previous_at != @at
+          logger.error "#{self} period changed (from #{previous_at} to #{@at}), clearing last run"
           clear
         end
       end
 
-      @redis.set(desired_at_key, @config[:at].to_json)
+      @redis.set(desired_at_key, @at.serialize)
     end
 
     def run_every?(time)

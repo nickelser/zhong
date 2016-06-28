@@ -1,4 +1,6 @@
+require "digest"
 require "logger"
+require "msgpack"
 require "redis"
 require "suo"
 require "active_support/time"
@@ -14,6 +16,7 @@ require "zhong/scheduler"
 module Zhong
   class << self
     attr_writer :logger, :redis
+    attr_accessor :tz
   end
 
   def self.schedule(&block)
@@ -29,11 +32,11 @@ module Zhong
   end
 
   def self.scheduler
-    @scheduler ||= Scheduler.new(logger: logger, redis: redis)
+    @scheduler ||= Scheduler.new(logger: logger, redis: redis, tz: tz)
   end
 
   def self.jobs
-    scheduler.jobs.values
+    scheduler.jobs
   end
 
   def self.logger
