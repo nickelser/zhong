@@ -1,4 +1,4 @@
-# Zhong
+# Zhong [![Build Status](https://travis-ci.org/nickelser/zhong.svg?branch=master)](https://travis-ci.org/nickelser/zhong) [![Code Climate](https://codeclimate.com/github/nickelser/zhong/badges/gpa.svg)](https://codeclimate.com/github/nickelser/zhong) [![Test Coverage](https://codeclimate.com/github/nickelser/zhong/badges/coverage.svg)](https://codeclimate.com/github/nickelser/zhong) [![Gem Version](https://badge.fury.io/rb/zhong.svg)](http://badge.fury.io/rb/zhong)
 
 Useful, reliable distributed cron. Tired of your cron-like scheduler running key jobs twice? Would you like to be able to run your cron server on multiple machines and have it "just work"? Have we got the gem for you.
 

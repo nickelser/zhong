@@ -20,9 +20,10 @@ class TestScheduler < Minitest::Test
       every(3.seconds, "test_two") { test_two_counter += 1 }
     end
 
-    Thread.new { Zhong.start }
+    t = Thread.new { Zhong.start }
     sleep(7)
     Zhong.stop
+    t.join
     assert_equal 1, test_one_counter
     assert_equal 3, test_two_counter
   end

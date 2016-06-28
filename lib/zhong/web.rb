@@ -16,6 +16,12 @@ module Zhong
       end
     end
 
+    if ENV["RACK_ENV"] == "development"
+      before do
+        STDERR.puts "[params] #{params}" unless params.empty?
+      end
+    end
+
     set :root, File.expand_path(File.dirname(__FILE__) + "/../../web")
     set :public_folder, proc { "#{root}/assets" }
     set :views, proc { "#{root}/views" }
@@ -67,7 +73,6 @@ module Zhong
         {}
       end
     end
-
   end
 end
 
