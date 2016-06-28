@@ -1,4 +1,4 @@
-require "test_helper"
+require_relative "helper"
 
 class TestLibrary < Minitest::Test
   def test_that_it_has_a_version_number

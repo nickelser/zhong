@@ -91,6 +91,10 @@ module Zhong
       @stop = true
     end
 
+    def find_by_name(job_name)
+      @jobs[Digest::SHA256.hexdigest(job_name)]
+    end
+
     private
 
     TRAPPED_SIGNALS = %w(QUIT INT TERM).freeze

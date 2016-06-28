@@ -1,4 +1,4 @@
-require "test_helper"
+require_relative "helper"
 
 # Many At tests lifted from Clockwork (thanks Clockwork!)
 class TestAt < Minitest::Test

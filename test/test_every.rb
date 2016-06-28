@@ -1,4 +1,4 @@
-require "test_helper"
+require_relative "helper"
 
 class TestEvery < Minitest::Test
   def time_in_day(hour, minute, day = 0, sec = 0)

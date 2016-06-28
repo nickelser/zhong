@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-require "tilt/erubis"
 require "erb"
 require "sinatra/base"
 
