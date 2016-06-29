@@ -45,19 +45,20 @@ Zhong.schedule do
     true
   end
 
+  on(:before_run) do |job, time|
+    puts "running #{job}"
+    true # can conditionally run a specific job
+  end
+
+  on(:after_run) do |job, time, ran|
+    puts "#{job} ran?: #{ran}"
+  end
+
   error_handler do |e, job|
-    puts "damn, #{job} messed up: #{e}"
+    puts "dang, #{job} messed up: #{e}"
   end
 end
 ```
-
-## TODO
- - better logging
- - error handling
- - tests
- - examples
- - callbacks
- - generic handler
 
 ## History
 

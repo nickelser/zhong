@@ -16,9 +16,8 @@ ratings:
   paths:
   - "**.js"
   - "**.jsx"
-  - "**.module"
   - "**.rb"
 exclude_paths:
-- "**/*helper*.rb"
+- "**/*helper*"
 - test/
 - "**/*{.,-}min.js"

@@ -24,6 +24,27 @@ class TestScheduler < Minitest::Test
     assert_equal 3, test_two_counter
   end
 
+  def test_scheduler_categories
+    Zhong.schedule do
+      category "cat1" do
+        every(10.seconds, "cat_test_one") { nil }
+      end
+    end
+
+    assert_equal 1, Zhong.jobs.size
+    assert_equal "cat1.cat_test_one", Zhong.jobs.values.first.to_s
+  end
+
+  def test_scheduler_nested_category
+    assert_raises RuntimeError do
+      Zhong.schedule do
+        category "cat1" do
+          category "cat2"
+        end
+      end
+    end
+  end
+
   def test_scheduler_callbacks
     test_before_tick = 0
     test_after_tick = 0

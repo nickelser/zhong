@@ -27,6 +27,7 @@ module Zhong
 
       @jobs = {}
       @callbacks = {}
+      @category = nil
     end
 
     def category(name)
