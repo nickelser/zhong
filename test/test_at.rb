@@ -139,6 +139,32 @@ class TestAt < Minitest::Test
     assert_equal time_in_day(8, 20, 3), at.next_at(time_in_day(12, 31, 2))
   end
 
+  def test_to_s
+    at = Zhong::At.parse("thr 12:59")
+
+    assert_equal "12:59 on Thr", at.to_s
+
+    at = Zhong::At.parse(["8:20", "tues 12:30"])
+
+    assert_equal "08:20, 12:30 on Tues", at.to_s
+  end
+
+  def test_as_json
+    at = Zhong::At.parse("tues 23:01")
+
+    assert_equal({m: 1, h: 23, w: 2, g: 0.seconds}, at.as_json)
+
+    at = Zhong::At.parse(["8:**", "sun 12:30"])
+
+    assert_equal([{m: nil, h: 8, w: nil, g: 0.seconds}, {m: 30, h: 12, w: 0, g: 0.seconds}], at.as_json)
+  end
+
+  def test_serialize
+    at = Zhong::At.parse(["8:20", "tues 12:30"])
+
+    assert_equal Zhong::At.deserialize(at.serialize), at
+  end
+
   def test_invalid_time_32
     assert_raises Zhong::At::FailedToParse do
       Zhong::At.parse("32:00")

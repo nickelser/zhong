@@ -29,6 +29,36 @@ class TestJob < Minitest::Test
     assert_equal 1, success_counter.size
   end
 
+  def test_run_at
+    success_counter = Queue.new
+    job = Zhong::Job.new("test_run_at", {every: 1.second, at: ["**:**"]}.merge(test_default_config)) { success_counter << 1 }
+    now = Time.now
+
+    assert_equal 0, success_counter.size
+    assert_equal true, job.run?(now)
+    job.run(now)
+    assert_equal false, job.run?(now)
+    assert_equal 1, success_counter.size
+  end
+
+  def test_run_at_change
+    success_counter = Queue.new
+    job = Zhong::Job.new("test_run_at_change", {every: 1.second, at: ["**:**"]}.merge(test_default_config)) { success_counter << 1 }
+    now = Time.now
+
+    assert_equal 0, success_counter.size
+    assert_equal true, job.run?(now)
+    job.run(now)
+    assert_equal false, job.run?(now)
+    assert_equal 1, success_counter.size
+
+    job = Zhong::Job.new("test_run_at_change", {every: 1.second, at: ["**:**", "**:**"]}.merge(test_default_config)) { success_counter << 1 }
+    assert_equal true, job.run?(now)
+    job.run(now)
+    assert_equal false, job.run?(now)
+    assert_equal 2, success_counter.size
+  end
+
   def test_disable
     success_counter = Queue.new
     job = Zhong::Job.new("test_disable", {every: 1.second}.merge(test_default_config)) { success_counter << 1 }

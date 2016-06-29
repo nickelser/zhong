@@ -112,6 +112,8 @@ module Zhong
         new(minute: $1.to_i, grace: grace)
       when /\A(\d{1,2}):\*{1,2}\z/
         new(hour: $1.to_i, grace: grace)
+      when /\A\*{1,2}:\*{1,2}\z/
+        new(grace: grace)
       else
         fail FailedToParse, at
       end

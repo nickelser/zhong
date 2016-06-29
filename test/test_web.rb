@@ -70,4 +70,19 @@ class TestWeb < Minitest::Test
     assert_contains 'name="disable"', last_response.body
     assert_equal false, job.disabled?
   end
+
+  def test_heartbeat
+    Zhong.logger = test_logger
+    hostname = `hostname`.strip
+    pid = Process.pid
+
+    t = Thread.new { Zhong.start }
+    sleep(1)
+    Zhong.stop
+
+    get "/"
+    assert last_response.ok?
+    assert_contains hostname, last_response.body
+    assert_contains "PID #{pid}", last_response.body
+  end
 end
