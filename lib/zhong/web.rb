@@ -28,21 +28,21 @@ module Zhong
 
     helpers WebHelpers
 
-    get '/' do
+    get "/" do
       index
 
       erb :index
     end
 
-    post '/' do
-      if params['disable']
-        if job = Zhong.jobs[params['disable']]
-          job.disable
-        end
-      elsif params['enable']
-        if job = Zhong.jobs[params['enable']]
-          job.enable
-        end
+    post "/" do
+      if params["disable"]
+        job = Zhong.jobs[params["disable"]]
+
+        job.disable if job
+      elsif params["enable"]
+        job = Zhong.jobs[params["enable"]]
+
+        job.enable if job
       end
 
       index
@@ -67,17 +67,16 @@ module Zhong
     end
 
     def safe_mget(keys)
-      if keys.length > 0
-        Zhong.redis.mapped_mget(*keys)
-      else
+      if keys.empty?
         {}
+      else
+        Zhong.redis.mapped_mget(*keys)
       end
     end
   end
 end
 
-if defined?(::ActionDispatch::Request::Session) &&
-    !::ActionDispatch::Request::Session.respond_to?(:each)
+if defined?(::ActionDispatch::Request::Session) && !::ActionDispatch::Request::Session.respond_to?(:each)
   # mperham/sidekiq#2460
   # Rack apps can't reuse the Rails session store without
   # this monkeypatch

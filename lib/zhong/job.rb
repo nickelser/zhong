@@ -11,7 +11,7 @@ module Zhong
       @at = config[:at] ? At.parse(config[:at], grace: config.fetch(:grace, 15.minutes)) : nil
       @every = config[:every] ? Every.parse(config[:every]) : nil
 
-      fail "must specific either `at` or `every` for job: #{self}" unless @at || @every
+      raise "must specific either `at` or `every` for job: #{self}" unless @at || @every
 
       @block = block
 
@@ -39,6 +39,7 @@ module Zhong
 
       locked = false
       errored = false
+      ran = false
 
       begin
         redis_lock.lock do
@@ -61,6 +62,7 @@ module Zhong
           if @block
             begin
               @block.call
+              ran = true
             rescue => boom
               logger.error "#{self} failed: #{boom}"
               error_handler.call(boom, self) if error_handler
@@ -77,6 +79,8 @@ module Zhong
       @running = false
 
       logger.info "unable to acquire exclusive run lock: #{self}" if !locked && !errored
+
+      ran
     end
 
     def running?
@@ -97,7 +101,7 @@ module Zhong
     end
 
     def disabled?
-      !!@redis.get(disabled_key)
+      !@redis.get(disabled_key).nil?
     end
 
     def to_s

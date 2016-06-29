@@ -31,6 +31,10 @@ module Zhong
     scheduler.stop
   end
 
+  def self.clear
+    scheduler.clear
+  end
+
   def self.scheduler
     @scheduler ||= Scheduler.new(logger: logger, redis: redis, tz: tz)
   end

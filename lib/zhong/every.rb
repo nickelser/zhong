@@ -15,20 +15,17 @@ module Zhong
     def initialize(period)
       @period = period
 
-      fail "`every` must be >= 1 second" unless valid?
+      raise "`every` must be >= 1 second" unless valid?
     end
 
     def to_s
       EVERY_KEYWORDS.to_a.reverse.each do |friendly, period|
-        if @period % period == 0
-          rem = @period / period
+        next unless @period % period == 0
 
-          if rem == 1
-            return "#{rem} #{friendly}"
-          else
-            return "#{rem} #{friendly}s"
-          end
-        end
+        rem = @period / period
+
+        return "#{rem} #{friendly}" if rem == 1
+        return "#{rem} #{friendly}s"
       end
 
       "#{@period.to_i} second#{@period.to_i == 1 ? '' : 's'}"
@@ -49,11 +46,11 @@ module Zhong
       when String, Symbol
         key = every.downcase.to_sym
 
-        fail FailedToParse, every unless EVERY_KEYWORDS.key?(key)
+        raise FailedToParse, every unless EVERY_KEYWORDS.key?(key)
 
         new(EVERY_KEYWORDS[key])
       else
-        fail FailedToParse, every
+        raise FailedToParse, every
       end
     end
   end

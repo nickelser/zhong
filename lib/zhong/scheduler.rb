@@ -19,10 +19,18 @@ module Zhong
       @tz = @config[:tz]
       @category = nil
       @error_handler = nil
+      @running = false
+    end
+
+    def clear
+      raise "unable to clear while running; run Zhong.stop first" if @running
+
+      @jobs = {}
+      @callbacks = {}
     end
 
     def category(name)
-      fail "cannot nest categories: #{name} would be nested in #{@category} (#{caller.first})" if @category
+      raise "cannot nest categories: #{name} would be nested in #{@category} (#{caller.first})" if @category
 
       @category = name.to_s
 
@@ -32,7 +40,7 @@ module Zhong
     end
 
     def every(period, name, opts = {}, &block)
-      fail "must specify a period for #{name} (#{caller.first})" unless period
+      raise "must specify a period for #{name} (#{caller.first})" unless period
 
       job = Job.new(name, opts.merge(@config).merge(every: period, category: @category), &block)
 
@@ -50,7 +58,7 @@ module Zhong
     end
 
     def on(event, &block)
-      fail "unknown callback #{event}" unless [:before_tick, :after_tick, :before_run, :after_run].include?(event.to_sym)
+      raise "unknown callback #{event}" unless [:before_tick, :after_tick, :before_run, :after_run].include?(event.to_sym)
       (@callbacks[event.to_sym] ||= []) << block
     end
 
@@ -61,7 +69,11 @@ module Zhong
 
       trap_signals
 
+      raise "already running" if @running
+
       loop do
+        @running = true
+
         if fire_callbacks(:before_tick)
           now = redis_time
 
@@ -82,6 +94,8 @@ module Zhong
 
         break if @stop
       end
+
+      @running = false
 
       Thread.new { @logger.info "stopped" }.join
     end
@@ -111,9 +125,9 @@ module Zhong
     def run_job(job, time = redis_time)
       return unless fire_callbacks(:before_run, job, time)
 
-      job.run(time, error_handler)
+      ran = job.run(time, error_handler)
 
-      fire_callbacks(:after_run, job, time)
+      fire_callbacks(:after_run, job, time, ran)
     end
 
     def heartbeat(time)

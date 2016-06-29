@@ -9,6 +9,11 @@ class TestWeb < Minitest::Test
     Zhong::Web
   end
 
+  def setup
+    Zhong.logger = test_logger
+    Zhong.clear
+  end
+
   def test_index
     get "/"
     assert last_response.ok?
@@ -17,8 +22,6 @@ class TestWeb < Minitest::Test
   end
 
   def test_index_job
-    Zhong.logger = test_logger
-
     Zhong.schedule do
       every(10.minutes, "test_web_job") { nil }
     end
@@ -30,8 +33,6 @@ class TestWeb < Minitest::Test
   end
 
   def test_disable_job
-    Zhong.logger = test_logger
-
     Zhong.schedule do
       every(30.seconds, "test_disable_web_job") { nil }
     end
@@ -51,8 +52,6 @@ class TestWeb < Minitest::Test
   end
 
   def test_enable_job
-    Zhong.logger = test_logger
-
     Zhong.schedule do
       every(12.hours, "test_enable_web_job") { nil }
     end
@@ -72,13 +71,13 @@ class TestWeb < Minitest::Test
   end
 
   def test_heartbeat
-    Zhong.logger = test_logger
     hostname = `hostname`.strip
     pid = Process.pid
 
     t = Thread.new { Zhong.start }
     sleep(1)
     Zhong.stop
+    t.join
 
     get "/"
     assert last_response.ok?

@@ -7,7 +7,7 @@ module Zhong
     # capture method from sinatra-contrib library.
     def capture(&block)
       block.call
-      eval('', block.binding)
+      eval("", block.binding)
     end
 
     def root_path
@@ -15,12 +15,12 @@ module Zhong
     end
 
     def current_path
-      @current_path ||= request.path_info.gsub(/^\//,'')
+      @current_path ||= request.path_info.gsub(%r(^\/),"")
     end
 
     def relative_time(time)
       if time
-        %{<time datetime="#{time.getutc.iso8601}">#{time}</time>}
+        %(<time datetime="#{time.getutc.iso8601}">#{time}</time>)
       else
         "never"
       end
@@ -41,14 +41,12 @@ module Zhong
     end
 
     def to_display(arg)
+      arg.inspect
+    rescue
       begin
-        arg.inspect
-      rescue
-        begin
-          arg.to_s
-        rescue => ex
-          "Cannot display argument: [#{ex.class.name}] #{ex.message}"
-        end
+        arg.to_s
+      rescue => ex
+        "Cannot display argument: [#{ex.class.name}] #{ex.message}"
       end
     end
 
@@ -59,8 +57,8 @@ module Zhong
         return number
       end
 
-      options = {delimiter: ',', separator: '.'}
-      parts = number.to_s.to_str.split('.')
+      options = {delimiter: ",", separator: "."}
+      parts = number.to_s.to_str.split(".")
       parts[0].gsub!(/(\d)(?=(\d\d\d)+(?!\d))/, "\\1#{options[:delimiter]}")
       parts.join(options[:separator])
     end
@@ -68,13 +66,13 @@ module Zhong
     def h(text)
       ::Rack::Utils.escape_html(text)
     rescue ArgumentError => e
-      raise unless e.message.eql?('invalid byte sequence in UTF-8')
-      text.encode!('UTF-16', 'UTF-8', invalid: :replace, replace: '').encode!('UTF-8', 'UTF-16')
+      raise unless e.message.eql?("invalid byte sequence in UTF-8")
+      text.encode!("UTF-16", "UTF-8", invalid: :replace, replace: "").encode!("UTF-8", "UTF-16")
       retry
     end
 
     def environment_title_prefix
-      environment = ENV['RAILS_ENV'] || ENV['RACK_ENV'] || 'development'
+      environment = ENV["RAILS_ENV"] || ENV["RACK_ENV"] || "development"
 
       "[#{environment.upcase}] " unless environment == "production"
     end

@@ -74,7 +74,7 @@ Style/SpaceInsideBrackets:
 Style/AndOr:
   Enabled: false
 
-Style/TrailingComma:
+Style/TrailingCommaInLiteral:
   Enabled: true
 
 Style/SpaceBeforeComma:
@@ -98,7 +98,7 @@ Style/SpaceAfterColon:
 Style/SpaceAfterComma:
   Enabled: true
 
-Style/SpaceAfterControlKeyword:
+Style/SpaceAroundKeyword:
   Enabled: true
 
 Style/SpaceAfterNot:
@@ -213,4 +213,7 @@ Metrics/ParameterLists:
   Enabled: false
 
 Metrics/PerceivedComplexity:
+  Enabled: false
+
+Style/Documentation:
   Enabled: false
