@@ -163,7 +163,7 @@ Style/StringLiterals:
   EnforcedStyle: double_quotes
 
 Metrics/CyclomaticComplexity:
-  Max: 8
+  Max: 10
 
 Metrics/LineLength:
   Max: 128
