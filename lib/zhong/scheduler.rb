@@ -45,10 +45,7 @@ module Zhong
 
       job = Job.new(name, opts.merge(@config).merge(every: period, category: @category), &block)
 
-      if jobs.key?(job.id)
-        @logger.error "duplicate job #{job}, skipping"
-        return
-      end
+      raise "duplicate job #{job}" if jobs.key?(job.id)
 
       @jobs[job.id] = job
     end

@@ -10,6 +10,13 @@ class TestLibrary < Minitest::Test
     sleep 1
   end
 
+  def test_logger
+    test_logger = Zhong.logger
+    Zhong.logger = nil
+    assert_output(nil, nil) { Zhong.logger.info "ensure has default logger" }
+    Zhong.logger = test_logger
+  end
+
   def test_heartbeats
     Zhong.schedule { nil }
     t = Thread.new { Zhong.start }

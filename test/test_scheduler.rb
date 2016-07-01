@@ -44,6 +44,17 @@ class TestScheduler < Minitest::Test
     end
   end
 
+  def test_duplicate_job_name
+    boom = assert_raises RuntimeError do
+      Zhong.schedule do
+        every(1.second, "dupe_job") { nil }
+        every(1.second, "dupe_job") { nil }
+      end
+    end
+
+    assert_match(/duplicate job dupe_job/, boom.message)
+  end
+
   def test_scheduler_callbacks
     test_before_tick = 0
     test_after_tick = 0
