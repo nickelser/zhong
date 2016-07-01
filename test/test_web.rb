@@ -10,7 +10,6 @@ class TestWeb < Minitest::Test
   end
 
   def setup
-    Zhong.logger = test_logger
     Zhong.clear
   end
 

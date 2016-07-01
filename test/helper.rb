@@ -16,18 +16,18 @@ def assert_contains(expected_substring, string, *args)
   assert string.include?(expected_substring), *args
 end
 
-def test_logger
-  @logger ||= begin
-    l = Logger.new(STDOUT)
-    l.level = Logger::ERROR
-    l
-  end
+Zhong.logger = begin
+  l = Logger.new(STDOUT)
+  l.level = Logger::ERROR
+  l
 end
+
+Zhong.redis = Redis.new(url: ENV["REDIS_URL"] || "redis://localhost/13")
 
 def test_default_config
   @default_config ||= {
-    redis: Redis.new(url: ENV["REDIS_URL"] || "redis://localhost/13"),
-    logger: test_logger,
+    redis: Zhong.redis,
+    logger: Zhong.logger,
     long_running_timeout: 10.seconds
   }
 end

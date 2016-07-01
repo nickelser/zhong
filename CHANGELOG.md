@@ -1,7 +1,17 @@
+## 0.1.6
+
+- Add Zhong.any_running? for monitoring that any Zhong node has checked in rencently
+- More code cleanup/refactoring.
+
 ## 0.1.5
 
 - Improve the API.
 - Add scheduler test.
+- Add Zhong::Web to see job status, and enable/disable jobs. Activate it with:
+    Rails.application.routes.draw do
+      # ...
+      require "zhong/web"
+      mount Zhong::Web => "/zhong" # or wherever
 
 ## 0.1.4
 

@@ -2,7 +2,6 @@ require_relative "helper"
 
 class TestScheduler < Minitest::Test
   def setup
-    Zhong.logger = test_logger
     Zhong.clear
   end
 

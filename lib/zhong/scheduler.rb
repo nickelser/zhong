@@ -102,12 +102,18 @@ module Zhong
     end
 
     def stop
-      Thread.new { @logger.error "stopping" } # thread necessary due to trap context
+      Thread.new { @logger.error "stopping" } if @running # thread necessary due to trap context
       @stop = true
     end
 
     def find_by_name(job_name)
       @jobs[Digest::SHA256.hexdigest(job_name)]
+    end
+
+    def redis_time
+      s, ms = @redis.time # returns [seconds since epoch, microseconds]
+      now = Time.at(s + ms / (10**6))
+      @tz ? now.in_time_zone(@tz) : now
     end
 
     private
@@ -148,12 +154,6 @@ module Zhong
     def sleep_until_next_second
       GC.start
       sleep(1.0 - Time.now.subsec + 0.0001)
-    end
-
-    def redis_time
-      s, ms = @redis.time # returns [seconds since epoch, microseconds]
-      now = Time.at(s + ms / (10**6))
-      @tz ? now.in_time_zone(@tz) : now
     end
   end
 end
