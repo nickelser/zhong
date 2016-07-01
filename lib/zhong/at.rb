@@ -71,6 +71,10 @@ module Zhong
       MessagePack.pack(as_json)
     end
 
+    def ==(other)
+      other.class == self.class && other.state == state
+    end
+
     def self.parse_serialized(at)
       if at.is_a?(Array)
         MultiAt.new(at.map { |a| parse_serialized(a) })
@@ -112,10 +116,6 @@ module Zhong
       else
         t.to_s.rjust(2, "0")
       end
-    end
-
-    def ==(other)
-      other.class == self.class && other.state == state
     end
 
     def state

@@ -159,8 +159,14 @@ class TestAt < Minitest::Test
     assert_equal([{m: nil, h: 8, w: nil, g: 0.seconds}, {m: 30, h: 12, w: 0, g: 0.seconds}], at.as_json)
   end
 
-  def test_serialize
+  def test_serialize_multi
     at = Zhong::At.parse(["8:20", "tues 12:30"])
+
+    assert_equal Zhong::At.deserialize(at.serialize), at
+  end
+
+  def test_serialize_single
+    at = Zhong::At.parse("sun 14:20")
 
     assert_equal Zhong::At.deserialize(at.serialize), at
   end

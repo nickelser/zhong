@@ -1,3 +1,8 @@
+## 0.1.7
+
+- Improve test coverage.
+- Fix a small serialization issue.
+
 ## 0.1.6
 
 - Add Zhong.any_running? for monitoring that any Zhong node has checked in rencently
