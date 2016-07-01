@@ -10,19 +10,21 @@ module Zhong
     enable :sessions
     use ::Rack::Protection, use: :authenticity_token unless ENV["RACK_ENV"] == "test"
 
-    # :nocov:
     if ENV["ZHONG_WEB_USERNAME"] && ENV["ZHONG_WEB_PASSWORD"]
+      # :nocov:
       use Rack::Auth::Basic, "Sorry." do |username, password|
         username == ENV["ZHONG_WEB_USERNAME"] and password == ENV["ZHONG_WEB_PASSWORD"]
       end
+      # :nocov:
     end
 
     if ENV["RACK_ENV"] == "development"
+      # :nocov:
       before do
         STDERR.puts "[params] #{params}" unless params.empty?
       end
+      # :nocov:
     end
-    # :nocov:
 
     set :root, File.expand_path(File.dirname(__FILE__) + "/../../web")
     set :public_folder, proc { "#{root}/assets" }
@@ -71,12 +73,12 @@ if defined?(::ActionDispatch::Request::Session) && !::ActionDispatch::Request::S
   # mperham/sidekiq#2460
   # Rack apps can't reuse the Rails session store without
   # this monkeypatch
-  # :nocov:
   class ActionDispatch::Request::Session
+    # :nocov:
     def each(&block)
       hash = self.to_hash
       hash.each(&block)
     end
+    # :nocov:
   end
-  # :nocov:
 end
