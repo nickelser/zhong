@@ -1,3 +1,9 @@
+## 0.1.8
+
+- Make it very clear when callbacks cause skips of ticks or runs.
+- Add logging when jobs/ticks are skipped.
+- Do not skip when callbacks return nil (only on false explicitly).
+
 ## 0.1.7
 
 - Improve test coverage.

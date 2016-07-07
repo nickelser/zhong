@@ -1,6 +1,6 @@
 module Zhong
   class Scheduler
-    attr_reader :config, :redis, :jobs
+    attr_reader :config, :redis, :jobs, :logger
 
     DEFAULT_CONFIG = {
       timeout: 0.5,
@@ -61,7 +61,7 @@ module Zhong
     end
 
     def start
-      @logger.info "starting at #{redis_time}"
+      logger.info "starting at #{redis_time}"
 
       @stop = false
 
@@ -87,19 +87,22 @@ module Zhong
           heartbeat(now)
 
           break if @stop
-          sleep_until_next_second
+        else
+          logger.info "skipping tick due to a `:before_tick` callback"
         end
+
+        sleep_until_next_second
 
         break if @stop
       end
 
       @running = false
 
-      Thread.new { @logger.info "stopped" }.join
+      Thread.new { logger.info "stopped" }.join
     end
 
     def stop
-      Thread.new { @logger.error "stopping" } if @running # thread necessary due to trap context
+      Thread.new { logger.error "stopping" } if @running # thread necessary due to trap context
       @stop = true
     end
 
@@ -119,7 +122,9 @@ module Zhong
     private_constant :TRAPPED_SIGNALS
 
     def fire_callbacks(event, *args)
-      @callbacks[event].to_a.all? { |h| h.call(*args) }
+      @callbacks[event].to_a.map do |callback|
+        callback.call(*args)
+      end.compact.all? # do not skip on nils
     end
 
     def jobs_to_run(time = redis_time)
@@ -127,7 +132,10 @@ module Zhong
     end
 
     def run_job(job, time = redis_time)
-      return unless fire_callbacks(:before_run, job, time)
+      unless fire_callbacks(:before_run, job, time)
+        logger.info "skipping #{job} due to a `:before_run` callback"
+        return
+      end
 
       ran = job.run(time, error_handler)
 

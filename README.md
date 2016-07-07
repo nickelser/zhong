@@ -34,7 +34,7 @@ Zhong.schedule do
     end
   end
 
-  # note: callbacks that return nil or false will cause event to not run
+  # note: callbacks that explicitly false will cause event to not run
   on(:before_tick) do
     puts "ding"
     true
@@ -42,7 +42,6 @@ Zhong.schedule do
 
   on(:after_tick) do
     puts "dong"
-    true
   end
 
   on(:before_run) do |job, time|
