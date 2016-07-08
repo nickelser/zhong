@@ -1,3 +1,7 @@
+## 0.1.9
+
+- Much more performant heartbeat checks (thanks, @sherinkurian).
+
 ## 0.1.8
 
 - Make it very clear when callbacks cause skips of ticks or runs.
