@@ -43,8 +43,10 @@ module Zhong
   def self.all_heartbeats
     heartbeat_key = scheduler.config[:heartbeat_key]
     heartbeats = Zhong.redis.hgetall(heartbeat_key)
-    old_beats, new_beats = heartbeats.partition do |k, v|
-      Time.at(v.to_i) < 15.minutes.ago
+    now = redis_time
+
+    old_beats, new_beats = heartbeats.partition do |_, v|
+      Time.at(v.to_i) < (now - 15.minutes)
     end
 
     redis.multi do
