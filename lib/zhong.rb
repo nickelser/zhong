@@ -41,8 +41,19 @@ module Zhong
   end
 
   def self.all_heartbeats
-    Zhong::Util.safe_mget(Zhong.redis.scan_each(match: "zhong:heartbeat:*").to_a).map do |k, v|
-      host, pid = k.split("zhong:heartbeat:", 2)[1].split("#", 2)
+    heartbeat_key = scheduler.config[:heartbeat_key]
+    heartbeats = Zhong.redis.hgetall(heartbeat_key)
+    heartbeats.select do |k, v|
+      if Time.at(v.to_i) > 15.minutes.ago
+        Zhong.redis.hdel(heartbeat_key, k)
+        false
+      else
+        true
+      end
+    end
+
+    heartbeats.map do |k, v|
+      host, pid = k.split("#", 2)
       {host: host, pid: pid, last_seen: Time.at(v.to_i)}
     end
   end
