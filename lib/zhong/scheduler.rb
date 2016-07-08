@@ -6,7 +6,8 @@ module Zhong
       timeout: 0.5,
       grace: 15.minutes,
       long_running_timeout: 5.minutes,
-      tz: nil
+      tz: nil,
+      heartbeat_key: "zhong:heartbeat",
     }.freeze
 
     def initialize(config = {})
@@ -143,11 +144,11 @@ module Zhong
     end
 
     def heartbeat(time)
-      @redis.setex(heartbeat_key, @config[:grace].to_i, time.to_i)
+      @redis.hset(config[:heartbeat_key], heartbeat_field, time.to_i)
     end
 
-    def heartbeat_key
-      @heartbeat_key ||= "zhong:heartbeat:#{`hostname`.strip}##{Process.pid}"
+    def heartbeat_field
+      @heartbeat_field ||= "#{`hostname`.strip}##{Process.pid}"
     end
 
     def trap_signals
