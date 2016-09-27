@@ -2,11 +2,12 @@ module Zhong
   class Job
     attr_reader :name, :category, :last_ran, :logger, :at, :every, :id
 
-    def initialize(job_name, config = {}, &block)
+    def initialize(job_name, config = {}, callbacks = {}, &block)
       @name = job_name
       @category = config[:category]
       @logger = config[:logger]
       @config = config
+      @callbacks = callbacks
 
       @at = config[:at] ? At.parse(config[:at], grace: config.fetch(:grace, 15.minutes)) : nil
       @every = config[:every] ? Every.parse(config[:every]) : nil
@@ -93,11 +94,15 @@ module Zhong
     end
 
     def disable
+      fire_callbacks(:before_disable, self)
       @redis.set(disabled_key, "true")
+      fire_callbacks(:after_disable, self)
     end
 
     def enable
+      fire_callbacks(:before_enable, self)
       @redis.del(disabled_key)
+      fire_callbacks(:after_enable, self)
     end
 
     def disabled?
@@ -135,6 +140,12 @@ module Zhong
     end
 
     private
+
+    def fire_callbacks(event, *args)
+      @callbacks[event].to_a.map do |callback|
+        callback.call(*args)
+      end.compact.all? # do not skip on nils
+    end
 
     # if the @at value is changed across runs, the last_run becomes invalid
     # so clear it

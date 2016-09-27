@@ -53,6 +53,22 @@ Zhong.schedule do
     puts "#{job} ran?: #{ran}"
   end
 
+  on(:before_disable) do |job|
+    puts "#{job} is going to be disabled"
+  end
+
+  on(:after_disable) do |job|
+    puts "#{job} disabled"
+  end
+
+  on(:before_enable) do |job|
+    puts "#{job} is going to be enabled"
+  end
+
+  on(:after_enable) do |job|
+    puts "#{job} enabled"
+  end
+
   error_handler do |e, job|
     puts "dang, #{job} messed up: #{e}"
   end
