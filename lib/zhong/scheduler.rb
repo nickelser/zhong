@@ -44,7 +44,7 @@ module Zhong
     def every(period, name, opts = {}, &block)
       raise "must specify a period for #{name} (#{caller.first})" unless period
 
-      job = Job.new(name, opts.merge(@config).merge(every: period, category: @category), &block)
+      job = Job.new(name, opts.merge(@config).merge(every: period, category: @category), @callbacks, &block)
 
       raise "duplicate job #{job}" if jobs.key?(job.id)
 
@@ -57,7 +57,7 @@ module Zhong
     end
 
     def on(event, &block)
-      raise "unknown callback #{event}" unless [:before_tick, :after_tick, :before_run, :after_run].include?(event.to_sym)
+      raise "unknown callback #{event}" unless [:before_tick, :after_tick, :before_run, :after_run, :before_disable, :after_disable, :before_enable, :after_enable].include?(event.to_sym)
       (@callbacks[event.to_sym] ||= []) << block
     end
 

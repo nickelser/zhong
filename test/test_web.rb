@@ -32,8 +32,13 @@ class TestWeb < Minitest::Test
   end
 
   def test_disable_job
+    test_before_disable = 0
+    test_after_disable = 0
+
     Zhong.schedule do
       every(30.seconds, "test_disable_web_job") { nil }
+      on(:before_disable) { test_before_disable += 1 }
+      on(:after_disable) { test_after_disable += 1 }
     end
 
     job = Zhong.scheduler.find_by_name("test_disable_web_job")
@@ -48,11 +53,18 @@ class TestWeb < Minitest::Test
     assert_contains "every 30 seconds", last_response.body
     assert_contains 'name="enable"', last_response.body
     assert_equal true, job.disabled?
+    assert_equal 1, test_before_disable
+    assert_equal 1, test_after_disable
   end
 
   def test_enable_job
+    test_before_enable = 0
+    test_after_enable = 0
+
     Zhong.schedule do
       every(12.hours, "test_enable_web_job") { nil }
+      on(:before_enable) { test_before_enable += 1 }
+      on(:after_enable) { test_after_enable += 1 }
     end
 
     job = Zhong.scheduler.find_by_name("test_enable_web_job")
@@ -67,6 +79,8 @@ class TestWeb < Minitest::Test
     assert_contains "every 12 hours", last_response.body
     assert_contains 'name="disable"', last_response.body
     assert_equal false, job.disabled?
+    assert_equal 1, test_before_enable
+    assert_equal 1, test_after_enable
   end
 
   def test_heartbeat
