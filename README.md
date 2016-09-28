@@ -75,6 +75,20 @@ Zhong.schedule do
 end
 ```
 
+## Web UI
+
+Zhong comes with a web application that can display jobs, their last run and
+enable/disable them.
+
+### Rails
+
+Add the following to your config/routes.rb:
+
+```ruby
+require 'zhong/web'
+mount Zhong::Web, at: "zhong"
+```
+
 ## History
 
 View the [changelog](https://github.com/nickelser/zhong/blob/master/CHANGELOG.md).
