@@ -6,8 +6,7 @@ module Zhong
       timeout: 0.5,
       grace: 15.minutes,
       long_running_timeout: 5.minutes,
-      tz: nil,
-      heartbeat_key: "zhong:heartbeat",
+      tz: nil
     }.freeze
 
     def initialize(config = {})
