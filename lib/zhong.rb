@@ -18,7 +18,7 @@ require "zhong/scheduler"
 module Zhong
   class << self
     extend Forwardable
-    attr_writer :logger, :redis
+    attr_writer :logger, :redis, :heartbeat_key
     attr_accessor :tz
 
     def_delegators :scheduler, :start, :stop, :clear, :jobs, :redis_time
@@ -29,7 +29,7 @@ module Zhong
   end
 
   def self.scheduler
-    @scheduler ||= Scheduler.new(logger: logger, redis: redis, tz: tz)
+    @scheduler ||= Scheduler.new(logger: logger, redis: redis, tz: tz, heartbeat_key: heartbeat_key)
   end
 
   def self.any_running?(grace = 60.seconds)
@@ -67,5 +67,9 @@ module Zhong
 
   def self.redis
     @redis ||= Redis.new(url: ENV["REDIS_URL"])
+  end
+
+  def self.heartbeat_key
+    @heartbeat_key ||= "zhong:heartbeat"
   end
 end
