@@ -1,3 +1,8 @@
+## 0.2.0
+
+- Configuring Redis and the heartbeat key now correctly updates even after Zhong is configured initially.
+- Some cleanup in how config is stored in general.
+
 ## 0.1.9
 
 - Much more performant heartbeat checks (thanks, @sherinkurian).
