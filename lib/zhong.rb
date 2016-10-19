@@ -29,11 +29,11 @@ module Zhong
   end
 
   def self.scheduler
-    @scheduler ||= Scheduler.new(logger: logger, redis: redis, tz: tz, heartbeat_key: heartbeat_key)
+    @scheduler ||= Scheduler.new
   end
 
   def self.any_running?(grace = 60.seconds)
-    latest_heartbeat > (redis_time - grace)
+    latest_heartbeat && latest_heartbeat > (redis_time - grace)
   end
 
   def self.latest_heartbeat
@@ -41,8 +41,7 @@ module Zhong
   end
 
   def self.all_heartbeats
-    heartbeat_key = scheduler.config[:heartbeat_key]
-    heartbeats = Zhong.redis.hgetall(heartbeat_key)
+    heartbeats = redis.hgetall(heartbeat_key)
     now = redis_time
 
     old_beats, new_beats = heartbeats.partition do |_, v|
@@ -50,7 +49,7 @@ module Zhong
     end
 
     redis.multi do
-      old_beats.each { |b| Zhong.redis.hdel(heartbeat_key, b) }
+      old_beats.each { |b| redis.hdel(heartbeat_key, b) }
     end
 
     new_beats.map do |k, v|

@@ -1,12 +1,14 @@
 module Zhong
   class Scheduler
-    attr_reader :config, :redis, :jobs, :logger
+    extend Forwardable
+
+    def_delegators Zhong, :redis, :tz, :logger, :heartbeat_key
+    attr_reader :jobs
 
     DEFAULT_CONFIG = {
       timeout: 0.5,
       grace: 15.minutes,
-      long_running_timeout: 5.minutes,
-      tz: nil
+      long_running_timeout: 5.minutes
     }.freeze
 
     def initialize(config = {})
@@ -14,9 +16,6 @@ module Zhong
       @callbacks = {}
       @config = DEFAULT_CONFIG.merge(config)
 
-      @logger = @config[:logger]
-      @redis = @config[:redis]
-      @tz = @config[:tz]
       @category = nil
       @error_handler = nil
       @running = false
@@ -56,7 +55,10 @@ module Zhong
     end
 
     def on(event, &block)
-      raise "unknown callback #{event}" unless [:before_tick, :after_tick, :before_run, :after_run, :before_disable, :after_disable, :before_enable, :after_enable].include?(event.to_sym)
+      unless [:before_tick, :after_tick, :before_run, :after_run, :before_disable,
+              :after_disable, :before_enable, :after_enable].include?(event.to_sym)
+        raise "unknown callback #{event}"
+      end
       (@callbacks[event.to_sym] ||= []) << block
     end
 
@@ -111,9 +113,9 @@ module Zhong
     end
 
     def redis_time
-      s, ms = @redis.time # returns [seconds since epoch, microseconds]
+      s, ms = redis.time # returns [seconds since epoch, microseconds]
       now = Time.at(s + ms / (10**6))
-      @tz ? now.in_time_zone(@tz) : now
+      tz ? now.in_time_zone(tz) : now
     end
 
     private
@@ -143,7 +145,7 @@ module Zhong
     end
 
     def heartbeat(time)
-      @redis.hset(config[:heartbeat_key], heartbeat_field, time.to_i)
+      redis.hset(heartbeat_key, heartbeat_field, time.to_i)
     end
 
     def heartbeat_field

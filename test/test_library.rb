@@ -24,7 +24,27 @@ class TestLibrary < Minitest::Test
     assert_equal true, Zhong.any_running?
     assert_in_delta Zhong.redis_time.to_f, Time.now.to_f, 1
     assert_in_delta Zhong.redis_time.to_f, Zhong.latest_heartbeat.to_f, 1
+    refute_empty Zhong.all_heartbeats
     Zhong.stop
+    t.join
+  end
+
+  def test_redis_change
+    Zhong.schedule { nil }
+    t = Thread.new { Zhong.start }
+    sleep(1)
+    assert_equal true, Zhong.any_running?
+    test_redis = Zhong.redis
+    Zhong.stop
+    t.join
+    Zhong.redis = Redis.new(url: "redis://localhost/15")
+    refute Zhong.any_running?(5.seconds)
+    t = Thread.new { Zhong.start }
+    sleep(1)
+    assert_equal true, Zhong.any_running?
+    assert_in_delta Zhong.redis_time.to_f, Time.now.to_f, 1
+    Zhong.stop
+    Zhong.redis = test_redis
     t.join
   end
 end
