@@ -1,3 +1,7 @@
+## 0.2.1
+
+- Fix manually specifying a Redis connection (thanks, Richard Adams!)
+
 ## 0.2.0
 
 - Configuring Redis and the heartbeat key now correctly updates even after Zhong is configured initially.
