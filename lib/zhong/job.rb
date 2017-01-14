@@ -183,7 +183,7 @@ module Zhong
     end
 
     def redis_lock
-      @lock ||= Suo::Client::Redis.new(lock_key, client: @redis, stale_lock_expiration: @long_running_timeout)
+      @lock ||= Suo::Client::Redis.new(lock_key, client: redis, stale_lock_expiration: @long_running_timeout)
     end
   end
 end
