@@ -23,6 +23,7 @@ module Zhong
       @long_running_timeout = config[:long_running_timeout]
       @running = false
       @first_run = true
+      @last_ran = nil
       @id = Digest::SHA256.hexdigest(@name)
     end
 
