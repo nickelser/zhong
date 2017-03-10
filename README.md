@@ -4,6 +4,7 @@ Useful, reliable distributed cron. Tired of your cron-like scheduler running key
 
 Zhong uses Redis to acquire exclusive locks on jobs, as well as recording when they last ran. This means that you can rest easy at night, knowing that your customers are getting their monthly Goat Fancy magazine subscriptions and you are rolling around in your piles of money without a care in the world.
 
+:tangerine: Battle-tested at [Instacart](https://www.instacart.com/opensource)
 # Installation
 
 Add this line to your application’s Gemfile:
