@@ -1,3 +1,7 @@
+## 0.2.2
+
+- Re-licensed as LGPL, as I lifted Sidekiq-web code to power Zhong web (thanks Mike Perham for the great gem and the code!)
+
 ## 0.2.1
 
 - Fix manually specifying a Redis connection (thanks, Richard Adams!)

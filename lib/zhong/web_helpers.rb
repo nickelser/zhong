@@ -2,6 +2,8 @@
 require "uri"
 
 module Zhong
+  # Most of the following helpers are copied from a previous version of the Sidekiq project
+  # available here: https://github.com/mperham/sidekiq/blob/2c9f7662fcdcb52d59b72ba0fe7dc5f963de4904/lib/sidekiq/web_helpers.rb
   module WebHelpers
     # Simple capture method for erb templates. The origin was
     # capture method from sinatra-contrib library.

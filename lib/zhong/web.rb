@@ -6,6 +6,8 @@ require "zhong"
 require "zhong/web_helpers"
 
 module Zhong
+  # Most of the following helpers are copied from a previous version of the Sidekiq project
+  # available here: https://github.com/mperham/sidekiq/blob/2c9f7662fcdcb52d59b72ba0fe7dc5f963de4904/lib/sidekiq/web.rb
   class Web < Sinatra::Base
     enable :sessions
     use ::Rack::Protection, use: :authenticity_token unless ENV["RACK_ENV"] == "test"
