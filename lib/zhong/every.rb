@@ -20,7 +20,7 @@ module Zhong
 
     def to_s
       EVERY_KEYWORDS.to_a.reverse.each do |friendly, period|
-        next unless @period % period == 0
+        next unless @period.to_i % period.to_i == 0
 
         rem = @period / period
 

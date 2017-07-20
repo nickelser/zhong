@@ -77,6 +77,18 @@ class TestEvery < Minitest::Test
     assert_equal time_in_day(0, 0, 7, 10), every.next_at(time_in_day(0, 0, 0, 10))
   end
 
+  def test_to_s
+    assert_equal "3 minutes", Zhong::Every.parse(3.minute).to_s
+    assert_equal "3 hours", Zhong::Every.parse(3.hour).to_s
+    assert_equal "1 hour", Zhong::Every.parse(1.hour).to_s
+    assert_equal "3 days", Zhong::Every.parse(3.day).to_s
+    assert_equal "3 weeks", Zhong::Every.parse(3.week).to_s
+    assert_equal "3 months", Zhong::Every.parse(3.month).to_s
+    assert_equal "1 month", Zhong::Every.parse(1.month).to_s
+    assert_equal "3 years", Zhong::Every.parse(3.year).to_s
+    assert_equal "3 decades", Zhong::Every.parse(30.years).to_s
+  end
+
   def test_invalid_string_foo
     assert_raises Zhong::Every::FailedToParse do
       Zhong::Every.parse("foo")
