@@ -15,6 +15,9 @@ gem 'zhong'
 
 ## Usage
 
+### Zhong schedule
+Create a definition file, let's call it `zhong.rb`:
+
 ```ruby
 Zhong.redis = Redis.new(url: ENV["ZHONG_REDIS_URL"])
 
@@ -76,18 +79,55 @@ Zhong.schedule do
 end
 ```
 
+This file only describes what should be the schedule. Nothing will be executed
+until we actually run
+```ruby
+Zhong.start
+```
+after describing the Zhong schedule.
+
+### Zhong cron process
+
+You can run the cron process that will execute your code from the definitions
+in the `zhong.rb` file by running:
+```sh
+zhong zhong.rb
+```
+
 ## Web UI
 
 Zhong comes with a web application that can display jobs, their last run and
 enable/disable them.
 
+This is a Sinatra application that requires at least `v2.0.0`. You can add to your Gemfile
+```ruby
+gem 'sinatra', "~>2.0"
+```
+
+It can be protected by HTTP basic authentication by
+setting the following environment variables:
+- `ZHONG_WEB_USERNAME`: the username
+- `ZHONG_WEB_PASSWORD`: the password
+
+You'll need to load the Zhong schedule to be able to see jobs in the web UI, typically
+by requiring your `zhong.rb` definition file.
+
 ### Rails
+Load the Zhong schedule by creating an initializer at `config/initializers/zhong.rb`,
+with the following content:
+```ruby
+require "#{Rails.root}/zhong.rb"
+```
 
-Add the following to your config/routes.rb:
-
+Add the following to your `config/routes.rb`:
 ```ruby
 require 'zhong/web'
-mount Zhong::Web, at: "zhong"
+
+Rails.application.routes.draw do
+  # Other routes here...
+
+  mount Zhong::Web, at: "/zhong"
+end
 ```
 
 ## History
