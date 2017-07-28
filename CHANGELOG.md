@@ -1,3 +1,8 @@
+## 0.2.3
+
+- Much improved documentation, and executable file naming (thank you Antoine Augusti!)
+- Fixes to the time parsing & to_s (thank you Antoine Augusti!)
+
 ## 0.2.2
 
 - Re-licensed as LGPL, as I lifted Sidekiq-web code to power Zhong web (thanks Mike Perham for the great gem and the code!)
