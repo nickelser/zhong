@@ -23,9 +23,9 @@ Zhong.schedule do
       puts "foo"
     end
 
-    every(1.minute, "biz", at: ["**:26", "**:27"]) { puts "biz" }
-    every(1.week, "baz", at: ["mon 22:45", "wed 23:13"]) { puts "baz" }
-    every(10.seconds, "boom") { raise "fail" }
+    every(1.minute, "running biz at 26th and 27th minute", at: ["**:26", "**:27"]) { puts "biz" }
+    every(1.week, "running baz on mon and wed", at: ["mon 22:45", "wed 23:13"]) { puts "baz" }
+    every(10.seconds, "boom every 10 seconds") { raise "fail" }
   end
 
   category "clutter" do
