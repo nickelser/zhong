@@ -70,7 +70,7 @@
         <tbody>
           <% @jobs.each do |job| %>
             <% enabled = !@disabled[job.to_s] %>
-            <% enabled_str = enabled ? 'disable' : 'enable' -%>
+            <% enabled_str = enabled ? 'disable' : 'enable' %>
             <% last_run = @last_runs[job.to_s] %>
             <tr class="<%= enabled ? "" : "disabled" %>">
               <td><%= h(job) %></td>
@@ -88,7 +88,7 @@
                 <form method="POST" style="margin-top: 20px; margin-bottom: 10px;">
                   <%= csrf_tag %>
                   <div>
-                    <button type="submit" name="<%= enabled_str -%>" value="<%= job.id -%>" data-confirm="Are you sure you want to <%= enabled_str -%> this job?"><%= enabled_str.capitalize -%></button>
+                    <button type="submit" name="<%= enabled_str %>" value="<%= job.id %>" data-confirm="Are you sure you want to <%= enabled_str %> this job?"><%= enabled_str.capitalize %></button>
                   </div>
                 </form>
               </td>
@@ -100,15 +100,15 @@
     <div>
       <h3>Hosts</h3>
       <ul>
-      <% @hosts.each do |host| -%>
+      <% @hosts.each do |host| %>
         <li>
-          <strong><%= h(host[:host]) -%></strong> <em>(PID <%= host[:pid] -%>)</em>: last seen <%= relative_time(host[:last_seen]) -%>.
+          <strong><%= h(host[:host]) %></strong> <em>(PID <%= host[:pid] %>)</em>: last seen <%= relative_time(host[:last_seen]) %>.
         </li>
-      <% end -%>
+      <% end %>
       </ul>
     </div>
     <div>
-      <small><%= product_version -%></small>
+      <small><%= product_version %></small>
     </div>
   </body>
 </html>
