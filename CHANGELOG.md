@@ -1,3 +1,7 @@
+## 0.2.4
+
+- Compatibility with Sinatra/Tilt (thank you Brian Storti!)
+
 ## 0.2.3
 
 - Much improved documentation, and executable file naming (thank you Antoine Augusti!)
