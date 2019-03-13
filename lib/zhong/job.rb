@@ -3,7 +3,7 @@ module Zhong
     extend Forwardable
     def_delegators Zhong, :redis, :tz, :logger, :heartbeat_key
 
-    attr_reader :name, :category, :last_ran, :at, :every, :id
+    attr_reader :name, :category, :last_ran, :at, :every, :id, :owner
 
     def initialize(job_name, config = {}, callbacks = {}, &block)
       @name = job_name
@@ -21,6 +21,8 @@ module Zhong
 
       @if = config[:if]
       @long_running_timeout = config[:long_running_timeout]
+      @owner = config[:owner]
+      @with_owner = @owner.present? && defined?(Rollbar) && Rollbar.respond_to?(:with_owner)
       @running = false
       @first_run = true
       @last_ran = nil
@@ -64,7 +66,11 @@ module Zhong
 
           if @block
             begin
-              @block.call
+              if with_owner
+                run_with_owner
+              else
+                @block.call
+              end
               ran = true
             rescue => boom
               logger.error "#{self} failed: #{boom}"
@@ -84,6 +90,10 @@ module Zhong
       logger.info "unable to acquire exclusive run lock: #{self}" if !locked && !errored
 
       ran
+    end
+
+    def run_with_owner
+      Object.const_get("Rollbar").public_send(:with_owner, owner, &@block)
     end
 
     def running?
