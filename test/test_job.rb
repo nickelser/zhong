@@ -71,4 +71,32 @@ class TestJob < Minitest::Test
     assert_equal true, job.run?(now)
     assert_equal 0, success_counter.size
   end
+
+  def test_owner
+
+    Kernel.const_set "Rollbar", Class.new do
+      @with_owner_calls = {}
+      define_singleton_method :with_owner_calls do
+        @with_owner_calls
+      end
+
+      define_singleton_method :with_owner do |owner|
+        yield
+        @with_owner_calls[:owner] ||= 0
+        @with_owner_calls[:owner] += 1
+      end
+    end
+
+    success_counter = Queue.new
+    job = Zhong::Job.new("test_owner", {every: 1.second, owner: :my_owner}.merge(test_default_config)) { success_counter << 1 }
+    now = Time.now
+
+    assert_equal :my_owner, job.owner
+    assert_equal 0, success_counter.size
+    assert_equal true, job.run?(now)
+    job.run(now)
+    assert_equal false, job.run?(now)
+    assert_equal 1, success_counter.size
+    assert_equal 1, Rollbar.with_owner_calls[:my_owner]
+  end
 end
