@@ -62,6 +62,7 @@
           <tr>
             <th>Job</th>
             <th style="width: 15%;">Scheduled</th>
+            <th style="width: 15%;">Owner</th>
             <th style="width: 15%;">Last Run</th>
             <th style="width: 15%;">Next Run</th>
             <th style="width: 15%;">Action</th>
@@ -82,6 +83,7 @@
                   at <%= job.at %>
                 <% end %>
               </td>
+              <td><%= job.owner.presence || "default" %></td>
               <td><%= relative_time(last_run ? Time.at(last_run.to_i) : nil) %></td>
               <td><%= relative_time(job.next_at) %></td>
               <td>
