@@ -78,8 +78,9 @@ class TestJob < Minitest::Test
     @@calls = Hash.new { |h, k| h[k] = 0 }
 
     def self.with_my_owner(owner, &block)
+      @calls[owner] += 1
+
       block.call
-      @calls[owner]++
     end
 
     def self.calls(owner)
@@ -89,27 +90,9 @@ class TestJob < Minitest::Test
 
 
   def test_owner
-
-
-    Kernel.const_set "Rollbar", Class.new do
-      @with_owner_calls = {}
-      define_singleton_method :with_owner_calls do
-        @with_owner_calls
-      end
-
-      define_singleton_method :with_owner do |owner|
-        yield
-        @with_owner_calls[:owner] ||= 0
-        @with_owner_calls[:owner] += 1
-      end
-    end
-
-    with_ownership_class = MyRollbar
-    with_ownership_method = :with_my_owner
-
     with_owner_config = test_default_config.merge(
-      with_ownership_class: with_ownership_class,
-      with_ownership_method: with_ownership_method
+      with_ownership_class: MyRollbar,
+      with_ownership_method: :with_my_owner
     )
 
     success_counter = Queue.new
