@@ -3,7 +3,7 @@ module Zhong
     extend Forwardable
     def_delegators Zhong, :redis, :tz, :logger, :heartbeat_key
 
-    attr_reader :name, :category, :last_ran, :at, :every, :id, :owner
+    attr_reader :name, :category, :last_ran, :at, :every, :id, :owner, :with_owner
 
     def initialize(job_name, config = {}, callbacks = {}, &block)
       @name = job_name
