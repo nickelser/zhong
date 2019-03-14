@@ -70,9 +70,26 @@ class TestJob < Minitest::Test
     job.run(now)
     assert_equal true, job.run?(now)
     assert_equal 0, success_counter.size
+
   end
 
+
+  class MyRollbar
+    @@calls = Hash.new { |h, k| h[k] = 0 }
+
+    def self.with_my_owner(owner, &block)
+      &block.call
+      @calls[owner]++
+    end
+
+    def self.calls(owner)
+      @@calls[owner]
+    end
+  end
+
+
   def test_owner
+
 
     Kernel.const_set "Rollbar", Class.new do
       @with_owner_calls = {}
@@ -87,16 +104,26 @@ class TestJob < Minitest::Test
       end
     end
 
+    with_ownership_class = MyRollbar
+    with_ownership_method = :with_my_owner
+
+    with_owner_config = test_default_config.merge(
+      with_ownership_class: with_ownership_class,
+      with_ownership_method: with_ownership_method
+    )
+
     success_counter = Queue.new
-    job = Zhong::Job.new("test_owner", {every: 1.second, owner: :my_owner}.merge(test_default_config)) { success_counter << 1 }
+
+    job = Zhong::Job.new("test_owner", {every: 1.second, owner: :my_owner}.merge(with_owner_config)) { success_counter << 1 }
     now = Time.now
 
     assert_equal :my_owner, job.owner
+    assert_equal 0, MyRollbar.calls(:my_owner)
     assert_equal 0, success_counter.size
     assert_equal true, job.run?(now)
     job.run(now)
     assert_equal false, job.run?(now)
     assert_equal 1, success_counter.size
-    assert_equal 1, Rollbar.with_owner_calls[:my_owner]
+    assert_equal 1, MyRollbar.calls(:my_owner)
   end
 end
