@@ -78,7 +78,7 @@ class TestJob < Minitest::Test
     @@calls = Hash.new { |h, k| h[k] = 0 }
 
     def self.with_my_owner(owner, &block)
-      @calls[owner] += 1
+      @@calls[owner] += 1
 
       block.call
     end
