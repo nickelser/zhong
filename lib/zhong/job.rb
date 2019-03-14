@@ -199,6 +199,5 @@ module Zhong
       @with_ownership_class.method(@with_ownership_method)
     rescue NameError => e
     end
-
   end
 end
