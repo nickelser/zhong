@@ -69,7 +69,7 @@ module Zhong
           if @block
             begin
               if with_owner
-                self.class.rollbar_with_owner_method.call(owner, &@block)
+                rollbar_with_owner_method.call(owner, &@block)
               else
                 @block.call
               end
@@ -195,7 +195,7 @@ module Zhong
       @lock ||= Suo::Client::Redis.new(lock_key, client: redis, stale_lock_expiration: @long_running_timeout)
     end
 
-    def self.rollbar_with_owner_method
+    def rollbar_with_owner_method
       @with_ownership_class.method(@with_ownership_method)
     rescue NameError => e
     end
