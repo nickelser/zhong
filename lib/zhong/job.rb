@@ -21,8 +21,10 @@ module Zhong
 
       @if = config[:if]
       @long_running_timeout = config[:long_running_timeout]
+      @with_ownership_class = config[:with_ownership_class] # class
+      @with_ownership_method = config[:with_ownership_method] # symbol
       @owner = config[:owner]
-      @with_owner = @owner.present? && self.class.rollbar_with_owner_method.present?
+      @with_owner = @owner.present? && rollbar_with_owner_method.present?
       @running = false
       @first_run = true
       @last_ran = nil
@@ -194,7 +196,7 @@ module Zhong
     end
 
     def self.rollbar_with_owner_method
-      Object.const_get("Rollbar").method(:with_owner)
+      @with_ownership_class.method(@with_ownership_method)
     rescue NameError => e
     end
 
