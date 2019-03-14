@@ -22,7 +22,7 @@ module Zhong
       @if = config[:if]
       @long_running_timeout = config[:long_running_timeout]
       @owner = config[:owner]
-      @with_owner = @owner.present? && defined?(Rollbar) && Rollbar.respond_to?(:with_owner)
+      @with_owner = @owner.present? && self.class.rollbar_with_owner_method.present?
       @running = false
       @first_run = true
       @last_ran = nil
@@ -67,7 +67,7 @@ module Zhong
           if @block
             begin
               if with_owner
-                run_with_owner
+                self.class.rollbar_with_owner_method.call(owner, &@block)
               else
                 @block.call
               end
@@ -90,10 +90,6 @@ module Zhong
       logger.info "unable to acquire exclusive run lock: #{self}" if !locked && !errored
 
       ran
-    end
-
-    def run_with_owner
-      Object.const_get("Rollbar").public_send(:with_owner, owner, &@block)
     end
 
     def running?
@@ -196,5 +192,11 @@ module Zhong
     def redis_lock
       @lock ||= Suo::Client::Redis.new(lock_key, client: redis, stale_lock_expiration: @long_running_timeout)
     end
+
+    def self.rollbar_with_owner_method
+      Object.const_get("Rollbar").method(:with_owner)
+    rescue NameError => e
+    end
+
   end
 end
