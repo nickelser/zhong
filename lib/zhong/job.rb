@@ -12,7 +12,7 @@ module Zhong
       @config = config
       @callbacks = callbacks
 
-      @at = config[:at] ? At.parse(config[:at], grace: config.fetch(:grace, 15.minutes)) : nil
+      @at = config[:at] ? At.parse(config[:at], grace: config.fetch(:grace, 0.minutes)) : nil
       @every = config[:every] ? Every.parse(config[:every]) : nil
 
       raise "must specific either `at` or `every` for job: #{self}" unless @at || @every
@@ -171,7 +171,7 @@ module Zhong
     end
 
     def run_at?(time)
-      !@at || @at.next_at(time) <= time
+      !@at || @at.next_at(@last_ran) <= time
     end
 
     def run_if?(time)
