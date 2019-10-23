@@ -40,12 +40,28 @@ module Zhong
       raise ArgumentError unless valid?
     end
 
+    def prev_at(time = Time.now)
+      at_time = at_time_day_hour_minute_adjusted(time)
+
+      grace_cutoff = time.change(sec: 0) - @grace
+
+      if at_time >= grace_cutoff
+        at_time - if @wday.nil?
+                    @hour.nil? ? 1.hour : 1.day
+                  else
+                    1.week
+                  end
+      else
+        at_time
+      end
+    end
+
     def next_at(time = Time.now)
       at_time = at_time_day_hour_minute_adjusted(time)
 
       grace_cutoff = time.change(sec: 0) - @grace
 
-      if at_time < grace_cutoff
+      if at_time <= grace_cutoff
         at_time + if @wday.nil?
                     @hour.nil? ? 1.hour : 1.day
                   else
@@ -156,6 +172,10 @@ module Zhong
 
     def ==(other)
       other.class == self.class && @ats == other.ats
+    end
+
+    def prev_at(time = Time.now)
+      ats.map { |at| at.prev_at(time) }.max
     end
 
     def next_at(time = Time.now)

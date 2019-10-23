@@ -12,7 +12,7 @@ module Zhong
       @config = config
       @callbacks = callbacks
 
-      @at = config[:at] ? At.parse(config[:at], grace: config.fetch(:grace, 15.minutes)) : nil
+      @at = config[:at] ? At.parse(config[:at], grace: config.fetch(:grace, 0.minutes)) : nil
       @every = config[:every] ? Every.parse(config[:every]) : nil
 
       raise "must specific either `at` or `every` for job: #{self}" unless @at || @every
@@ -29,7 +29,7 @@ module Zhong
 
     def run?(time = Time.now)
       if @first_run
-        clear_last_ran_if_at_changed if @at
+        setup_at if @at
         refresh_last_ran
         @first_run = false
       end
@@ -121,10 +121,6 @@ module Zhong
       [every_time, at_time, Time.now].compact.max || "now"
     end
 
-    def clear
-      redis.del(last_ran_key)
-    end
-
     def last_ran_key
       "zhong:last_ran:#{self}"
     end
@@ -149,20 +145,8 @@ module Zhong
       end.compact.all? # do not skip on nils
     end
 
-    # if the @at value is changed across runs, the last_run becomes invalid
-    # so clear it
-    def clear_last_ran_if_at_changed
-      previous_at_msgpack = redis.get(desired_at_key)
-
-      if previous_at_msgpack
-        previous_at = At.deserialize(previous_at_msgpack)
-
-        if previous_at != @at
-          logger.error "#{self} period changed (from #{previous_at} to #{@at}), clearing last run"
-          clear
-        end
-      end
-
+    def setup_at
+      redis.set(last_ran_key, @at.prev_at(Time.now).to_i)
       redis.set(desired_at_key, @at.serialize)
     end
 
@@ -171,7 +155,7 @@ module Zhong
     end
 
     def run_at?(time)
-      !@at || @at.next_at(time) <= time
+      !@at || @at.next_at(@last_ran) <= time
     end
 
     def run_if?(time)
