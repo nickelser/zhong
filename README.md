@@ -1,5 +1,7 @@
 # Zhong [![Build Status](https://travis-ci.org/nickelser/zhong.svg?branch=master)](https://travis-ci.org/nickelser/zhong) [![Code Climate](https://codeclimate.com/github/nickelser/zhong/badges/gpa.svg)](https://codeclimate.com/github/nickelser/zhong) [![Test Coverage](https://codeclimate.com/github/nickelser/zhong/badges/coverage.svg)](https://codeclimate.com/github/nickelser/zhong) [![Gem Version](https://badge.fury.io/rb/zhong.svg)](http://badge.fury.io/rb/zhong)
 
+NOTE for random passserby: This is a version that should better support the `at:` parameter, as well as frequent zhong (as frequent as `every 5.seconds`).
+
 Useful, reliable distributed cron. Tired of your cron-like scheduler running key jobs twice? Would you like to be able to run your cron server on multiple machines and have it "just work"? Have we got the gem for you.
 
 Zhong uses Redis to acquire exclusive locks on jobs, as well as recording when they last ran. This means that you can rest easy at night, knowing that your customers are getting their monthly Goat Fancy magazine subscriptions and you are rolling around in your piles of money without a care in the world.
