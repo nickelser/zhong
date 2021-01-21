@@ -7,7 +7,7 @@ module Zhong
 
     DEFAULT_CONFIG = {
       timeout: 0.5,
-      grace: 15.minutes,
+      grace: 0.minutes,
       long_running_timeout: 5.minutes
     }.freeze
 
