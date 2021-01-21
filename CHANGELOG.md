@@ -1,3 +1,7 @@
+## 0.3.0
+
+- Update version requirements, and switch to Github actions (thank you @mlarraz!)
+
 ## 0.2.4
 
 - Compatibility with Sinatra/Tilt (thank you Brian Storti!)
