@@ -15,7 +15,7 @@ module Zhong
     if ENV["ZHONG_WEB_USERNAME"] && ENV["ZHONG_WEB_PASSWORD"]
       # :nocov:
       use Rack::Auth::Basic, "Sorry." do |username, password|
-        username == ENV["ZHONG_WEB_USERNAME"] and password == ENV["ZHONG_WEB_PASSWORD"]
+        Zhong::Util.safe_compare(username, ENV["ZHONG_WEB_USERNAME"]) & Zhong::Util.safe_compare(password, ENV["ZHONG_WEB_PASSWORD"])
       end
       # :nocov:
     end
