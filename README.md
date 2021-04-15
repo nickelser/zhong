@@ -130,6 +130,22 @@ Rails.application.routes.draw do
 end
 ```
 
+## Build
+
+### Dependecies
+
+  - bundle 2.2.0 or major
+  - docker and docker-compose 2 or major
+  - ruby 2.7 or major
+### Run
+
+ - bundle install
+ - docker-compose up -d redis
+
+#### Run tests
+ 
+  - ruby test/test_*.rb
+
 ## History
 
 View the [changelog](https://github.com/nickelser/zhong/blob/master/CHANGELOG.md).
