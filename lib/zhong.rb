@@ -4,6 +4,7 @@ require "logger"
 require "msgpack"
 require "redis"
 require "suo"
+require "active_support"
 require "active_support/time"
 
 require "zhong/version"
